@@ -66,7 +66,11 @@ export function AdminLoginForm() {
         <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-cyan-200/80">
           ADMIN_*
         </code>{" "}
-        credentials from your environment.
+        credentials +{" "}
+        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-cyan-200/80">
+          ADMIN_SESSION_SECRET
+        </code>{" "}
+        (min 16 chars) on your host, then redeploy.
       </p>
 
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>

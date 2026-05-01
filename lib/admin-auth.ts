@@ -49,17 +49,20 @@ export async function verifyAdminToken(token: string): Promise<boolean> {
   }
 }
 
+/** Trim pasted Vercel values (newline / spaces from copy‑paste breaks login). */
+function envCredential(value: string | undefined): string {
+  return (value ?? "").trim();
+}
+
 function envMatch(
   username: string,
   password: string,
   envUser: string | undefined,
   envPass: string | undefined,
 ): boolean {
-  return (
-    Boolean(envUser && envPass) &&
-    username === envUser &&
-    password === envPass
-  );
+  const u = envCredential(envUser);
+  const p = envCredential(envPass);
+  return Boolean(u && p) && username === u && password === p;
 }
 
 /**

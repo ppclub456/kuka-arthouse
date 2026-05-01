@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -29,8 +28,7 @@ const COUNTRIES = [
 type TipChoice = "none" | "2" | "5" | "10" | "custom";
 
 export function CheckoutForm() {
-  const router = useRouter();
-  const { lines, subtotalAud, clearCart } = useCart();
+  const { lines, subtotalAud } = useCart();
 
   const [tipChoice, setTipChoice] = useState<TipChoice>("none");
   const [tipCustom, setTipCustom] = useState("");
@@ -56,9 +54,43 @@ export function CheckoutForm() {
   const feeAmount = subtotalWithTip * 0.08;
   const orderTotal = subtotalWithTip + feeAmount;
 
-  function handleSimulateSuccess() {
-    clearCart();
-    router.push("/success");
+  const [payError, setPayError] = useState("");
+  const [payPending, setPayPending] = useState(false);
+
+  async function handleStripeCheckout() {
+    setPayError("");
+    setPayPending(true);
+    try {
+      const res = await fetch("/api/stripe/store-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lines: lines.map((l) => ({
+            productId: l.productId,
+            quantity: l.quantity,
+          })),
+          tipAmountAud: tipAmount,
+          customerEmail: email.trim(),
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        url?: string;
+      };
+      if (!res.ok) {
+        setPayError(data.error ?? "Could not start Stripe Checkout");
+        return;
+      }
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setPayError("No checkout URL returned");
+    } catch {
+      setPayError("Network error");
+    } finally {
+      setPayPending(false);
+    }
   }
 
   if (lines.length === 0) {
@@ -316,35 +348,33 @@ export function CheckoutForm() {
               Payment
             </h2>
             <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-              Payment Gateway not selected — prototype only.
+              You will be redirected to <strong className="text-[var(--foreground)]">Stripe Checkout</strong>{" "}
+              to pay by card. Pricing is fixed on the server from your cart (subtotal, optional tip, and
+              8% processing fee as shown in the summary).
             </p>
-            <div className="mt-4 space-y-2 text-sm text-[var(--muted-foreground)]">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" disabled className="rounded border-[var(--border)]" />
-                Credit card
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" disabled className="rounded border-[var(--border)]" />
-                Crypto (TBD)
-              </label>
-            </div>
+            <p className="mt-3 text-[12px] leading-relaxed text-[var(--muted-foreground)]">
+              Requires <code className="font-mono text-[11px] text-cyan-400/80">STRIPE_SECRET_KEY</code>{" "}
+              in your host environment (Vercel Project Settings → Environment Variables).
+            </p>
           </section>
+
+          {payError ? (
+            <p className="text-center text-sm text-red-400/90" role="alert">
+              {payError}
+            </p>
+          ) : null}
 
           <button
             type="button"
-            onClick={handleSimulateSuccess}
-            className="moa-cta w-full py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] shadow-md shadow-[var(--accent)]/20"
+            disabled={payPending}
+            onClick={() => void handleStripeCheckout()}
+            className="moa-cta w-full py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] shadow-md shadow-[var(--accent)]/20 disabled:opacity-60"
           >
-            Continue to Payment
+            {payPending ? "Opening Stripe…" : "Pay with Stripe"}
           </button>
           <p className="text-center text-xs leading-relaxed text-[var(--muted-foreground)]">
-            <span className="font-medium text-[var(--foreground)]">Secure Checkout:</span>{" "}
-            Your payment information is encrypted and secure. All transactions are
-            protected.
-          </p>
-          <p className="text-center text-[10px] text-[var(--muted-foreground)]">
-            In this demo, &quot;Continue to Payment&quot; simulates a successful order and clears
-            your cart.
+            <span className="font-medium text-[var(--foreground)]">Secure checkout:</span>{" "}
+            Card details are collected by Stripe — this site does not store your full card number.
           </p>
         </form>
       </div>

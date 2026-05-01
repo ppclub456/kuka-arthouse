@@ -16,7 +16,10 @@ export function AdminPaymentLinkTool() {
   const [customAmount, setCustomAmount] = useState("");
   const [usePriceOverride, setUsePriceOverride] = useState(false);
   const [quantity, setQuantity] = useState("1");
-  const [generatedId, setGeneratedId] = useState<string | null>(null);
+  const [stripeUrl, setStripeUrl] = useState("");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [genError, setGenError] = useState("");
+  const [genPending, setGenPending] = useState(false);
 
   const selected = PRODUCTS.find((p) => p.id === productId);
 
@@ -59,32 +62,54 @@ export function AdminPaymentLinkTool() {
 
   const lineTotal = resolvedUnitAud * effectiveQty;
 
-  const linkUrl = useMemo(() => {
-    if (typeof window === "undefined" || !generatedId) return "";
-    const base = window.location.origin;
-    const q = new URLSearchParams({
-      amount: String(resolvedUnitAud),
-      item: displayTitle,
-      qty: String(effectiveQty),
-    });
-    if (mode === "catalog" && productId) {
-      q.set("productId", productId);
-    }
-    if (mode === "invoice") {
-      q.set("order", "1");
-    }
-    return `${base}/admin/pay/${generatedId}?${q.toString()}`;
-  }, [
-    generatedId,
-    resolvedUnitAud,
-    displayTitle,
-    effectiveQty,
-    mode,
-    productId,
-  ]);
+  async function handleGenerate() {
+    setGenError("");
+    setGenPending(true);
+    setStripeUrl("");
+    setSessionId(null);
 
-  function handleGenerate() {
-    setGeneratedId(crypto.randomUUID());
+    try {
+      const invoiceTotalAud = Number.parseFloat(invoiceTotal.trim() || "0");
+      const res = await fetch("/api/stripe/admin-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          mode,
+          invoiceTitle: invoiceTitle.trim(),
+          invoiceTotalAud,
+          productId,
+          usePriceOverride,
+          catalogOverrideAud: Number.parseFloat(catalogOverride.trim() || "0"),
+          customTitle: customTitle.trim(),
+          customUnitAud: Number.parseFloat(customAmount.trim() || "0"),
+          quantity: qtySafe,
+        }),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        url?: string;
+        sessionId?: string;
+      };
+
+      if (!res.ok) {
+        setGenError(data.error ?? "Could not create Stripe Checkout.");
+        return;
+      }
+
+      if (!data.url) {
+        setGenError("Stripe did not return a URL.");
+        return;
+      }
+
+      setStripeUrl(data.url);
+      setSessionId(data.sessionId ?? null);
+    } catch {
+      setGenError("Network error — try again.");
+    } finally {
+      setGenPending(false);
+    }
   }
 
   const input =
@@ -96,10 +121,12 @@ export function AdminPaymentLinkTool() {
         Payment link · orders
       </h2>
       <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-        Super admin: create a one-off payment URL (simulated checkout). Send the
-        link to the customer — they see the amount and can pay. Use{" "}
-        <strong className="text-[var(--foreground)]">Invoice total</strong> for
-        any AUD amount in one line.
+        Creates a Stripe Checkout link (hosted payment page). Only you can generate
+        it while logged in; the customer receives a normal card payment screen. Requires{" "}
+        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
+          STRIPE_SECRET_KEY
+        </code>{" "}
+        on the server.
       </p>
 
       <fieldset className="mt-8 space-y-3">
@@ -174,8 +201,7 @@ export function AdminPaymentLinkTool() {
                 placeholder="0.00"
               />
               <p className="mt-1.5 text-[11px] text-slate-500">
-                Quantity is fixed to 1. Customer pays exactly this total (plus
-                any fee logic you add later).
+                Quantity is fixed to 1. Customer pays exactly this Stripe line item total.
               </p>
             </div>
           </>
@@ -306,39 +332,51 @@ export function AdminPaymentLinkTool() {
           <span className="text-cyan-300/90">{lineTotal.toFixed(2)} AUD</span>
         </p>
 
+        {genError ? (
+          <p className="text-sm text-red-400/90" role="alert">
+            {genError}
+          </p>
+        ) : null}
+
         <button
           type="button"
-          onClick={handleGenerate}
-          className="moa-cta w-full py-3 text-[11px] font-semibold uppercase tracking-[0.2em] sm:w-auto sm:px-8"
+          disabled={genPending}
+          onClick={() => void handleGenerate()}
+          className="moa-cta w-full py-3 text-[11px] font-semibold uppercase tracking-[0.2em] disabled:opacity-60 sm:w-auto sm:px-8"
         >
-          Generate payment link
+          {genPending ? "Connecting to Stripe…" : "Generate Stripe payment link"}
         </button>
       </div>
 
-      {generatedId && (
+      {stripeUrl ? (
         <div className="mt-10">
           <label
             htmlFor="link-out"
             className="text-[11px] uppercase tracking-wider text-slate-400"
           >
-            Shareable URL
+            Stripe Checkout URL (send to customer)
           </label>
           <textarea
             id="link-out"
             readOnly
             rows={4}
-            value={linkUrl}
+            value={stripeUrl}
             className="mt-2 w-full resize-y border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 font-mono text-[11px] leading-relaxed text-cyan-100/90"
           />
+          {sessionId ? (
+            <p className="mt-2 text-[10px] text-slate-500">
+              Session id: <span className="font-mono text-slate-400">{sessionId}</span>
+            </p>
+          ) : null}
           <button
             type="button"
-            onClick={() => void navigator.clipboard.writeText(linkUrl)}
+            onClick={() => void navigator.clipboard.writeText(stripeUrl)}
             className="mt-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-400 underline-offset-4 hover:text-cyan-300 hover:underline"
           >
             Copy to clipboard
           </button>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminPaymentHistory } from "@/components/admin-payment-history";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { AdminPaymentLinkTool } from "@/components/admin-payment-link-tool";
 
@@ -24,6 +25,8 @@ export default function AdminPage() {
       <div className="mt-12">
         <AdminPaymentLinkTool />
       </div>
+
+      <AdminPaymentHistory />
 
       <p className="mt-10 text-center">
         <Link

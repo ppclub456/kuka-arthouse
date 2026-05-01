@@ -222,13 +222,6 @@ export default function HomePage() {
           <span>
             {year} © {STORE_BRAND} All Rights Reserved
           </span>
-          <Link
-            href="/admin/login"
-            prefetch={false}
-            className="font-semibold uppercase tracking-[0.2em] text-violet-400/80 hover:text-cyan-400/90"
-          >
-            Admin
-          </Link>
         </div>
       </footer>
     </main>

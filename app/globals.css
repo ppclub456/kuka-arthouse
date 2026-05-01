@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+/**
+ * AI tech / neural UI — not flat B&W: deep space base, cyan–violet spectrum,
+ * subtle grid + aurora washes, glass panels.
+ */
+:root {
+  --background: #030712;
+  --background-elevated: #0a0f1a;
+  --foreground: #f1f5f9;
+  --muted-foreground: #94a3b8;
+  --border: rgba(34, 211, 238, 0.18);
+  --border-dim: rgba(148, 163, 184, 0.12);
+  --card: rgba(15, 23, 42, 0.65);
+  --card-solid: #0f172a;
+  --surface-elevated: rgba(30, 41, 59, 0.45);
+  --input-bg: rgba(15, 23, 42, 0.85);
+  --accent: #22d3ee;
+  --accent-hover: #5eead4;
+  --accent-secondary: #a78bfa;
+  --accent-glow: rgba(34, 211, 238, 0.35);
+  --accent-soft: rgba(34, 211, 238, 0.08);
+  --moa-gradient: linear-gradient(135deg, #06b6d4 0%, #3b82f6 45%, #8b5cf6 100%);
+  --moa-gradient-hover: linear-gradient(
+    135deg,
+    #22d3ee 0%,
+    #6366f1 50%,
+    #c084fc 100%
+  );
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--accent);
+  --color-primary-foreground: #030712;
+  --color-muted: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100%;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  background-image:
+    linear-gradient(to right, rgba(34, 211, 238, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 211, 238, 0.04) 1px, transparent 1px),
+    radial-gradient(ellipse 120% 70% at 50% -25%, rgba(59, 130, 246, 0.28), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 100% 0%, rgba(139, 92, 246, 0.2), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(6, 182, 212, 0.12), transparent 45%);
+  background-size:
+    44px 44px,
+    44px 44px,
+    100% 100%,
+    100% 100%,
+    100% 100%;
+  background-attachment: fixed;
+}
+
+/* Primary CTAs — AI spectrum */
+.moa-cta {
+  background-image: var(--moa-gradient);
+  color: #fff;
+  box-shadow:
+    0 0 24px rgba(34, 211, 238, 0.25),
+    0 0 48px rgba(99, 102, 241, 0.12);
+  transition:
+    filter 0.15s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+.moa-cta:hover {
+  background-image: var(--moa-gradient-hover);
+  box-shadow:
+    0 0 32px rgba(34, 211, 238, 0.35),
+    0 0 64px rgba(139, 92, 246, 0.18);
+  filter: brightness(1.05);
+}
+.moa-cta:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.moa-cta-outline {
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  color: var(--accent);
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(8px);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.2s ease;
+}
+.moa-cta-outline:hover {
+  background: rgba(34, 211, 238, 0.1);
+  border-color: rgba(34, 211, 238, 0.7);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
+}
+
+.ai-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+}
+
+.ai-hero-mask {
+  background: linear-gradient(
+    180deg,
+    rgba(3, 7, 18, 0.2) 0%,
+    rgba(3, 7, 18, 0.75) 55%,
+    var(--background) 100%
+  );
+}
+
+/* Homepage hero — AI / tech gradient (no photo) */
+@keyframes kuka-hero-bloom {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.5;
+  }
+  40% {
+    transform: translate(4%, -3%) scale(1.06);
+    opacity: 0.72;
+  }
+  70% {
+    transform: translate(-3%, 4%) scale(0.97);
+    opacity: 0.58;
+  }
+}
+
+.kuka-hero-blob-a {
+  animation: kuka-hero-bloom 20s ease-in-out infinite;
+}
+
+.kuka-hero-blob-b {
+  animation: kuka-hero-bloom 26s ease-in-out infinite reverse;
+}
+
+.kuka-hero-blob-c {
+  animation: kuka-hero-bloom 24s ease-in-out infinite;
+  animation-delay: -8s;
+}
+
+.kuka-hero-scan {
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(34, 211, 238, 0.04) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  animation: kuka-hero-scan 8s linear infinite;
+}
+
+@keyframes kuka-hero-scan {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}

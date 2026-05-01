@@ -54,11 +54,19 @@ export function AdminLoginForm() {
         Staff only
       </p>
       <h1 className="mt-2 bg-gradient-to-r from-cyan-200 to-violet-300 bg-clip-text text-xl font-semibold tracking-tight text-transparent">
-        Admin sign in
+        Super admin sign in
       </h1>
       <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-        Generate payment links for customers. This area is not linked from the
-        public storefront.
+        Create payment links / orders for customers. Not linked from the public
+        storefront. Use{" "}
+        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-cyan-200/80">
+          SUPER_ADMIN_*
+        </code>{" "}
+        or{" "}
+        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-cyan-200/80">
+          ADMIN_*
+        </code>{" "}
+        credentials from your environment.
       </p>
 
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>

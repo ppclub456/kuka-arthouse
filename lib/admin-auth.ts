@@ -2,6 +2,9 @@ import { jwtVerify, SignJWT } from "jose";
 
 const COOKIE_NAME = "kuka_admin_session";
 
+/** JWT roles accepted for /admin (legacy `admin` + new `super_admin`) */
+export const ADMIN_SESSION_ROLES = ["super_admin", "admin"] as const;
+
 function getSecretKey(): Uint8Array {
   const raw =
     process.env.ADMIN_SESSION_SECRET ??
@@ -22,33 +25,76 @@ export function getAdminCookieName(): typeof COOKIE_NAME {
 
 export async function createAdminSessionToken(): Promise<string> {
   const secret = getSecretKey();
-  return new SignJWT({ role: "admin" })
+  return new SignJWT({ role: "super_admin" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(secret);
 }
 
+function isAllowedRole(role: unknown): boolean {
+  return (
+    typeof role === "string" &&
+    (ADMIN_SESSION_ROLES as readonly string[]).includes(role)
+  );
+}
+
 export async function verifyAdminToken(token: string): Promise<boolean> {
   try {
     const secret = getSecretKey();
     const { payload } = await jwtVerify(token, secret);
-    return payload.role === "admin";
+    return isAllowedRole(payload.role);
   } catch {
     return false;
   }
 }
 
+function envMatch(
+  username: string,
+  password: string,
+  envUser: string | undefined,
+  envPass: string | undefined,
+): boolean {
+  return (
+    Boolean(envUser && envPass) &&
+    username === envUser &&
+    password === envPass
+  );
+}
+
+/**
+ * Production: SUPER_ADMIN_* and/or ADMIN_* must both be non-empty on the pair you use.
+ * Development: SUPER_ADMIN defaults amituofo / amituofo123!; ADMIN defaults kuka / kuka-admin.
+ */
 export function validateAdminCredentials(
   username: string,
   password: string,
 ): boolean {
-  const u = process.env.ADMIN_USERNAME ?? "kuka";
   if (process.env.NODE_ENV === "production") {
-    const p = process.env.ADMIN_PASSWORD;
-    if (!p) return false;
-    return username === u && password === p;
+    if (
+      envMatch(username, password, process.env.SUPER_ADMIN_USERNAME, process.env.SUPER_ADMIN_PASSWORD)
+    ) {
+      return true;
+    }
+    if (
+      envMatch(username, password, process.env.ADMIN_USERNAME, process.env.ADMIN_PASSWORD)
+    ) {
+      return true;
+    }
+    return false;
   }
-  const p = process.env.ADMIN_PASSWORD ?? "kuka-admin";
-  return username === u && password === p;
+
+  const superOk = envMatch(
+    username,
+    password,
+    process.env.SUPER_ADMIN_USERNAME ?? "amituofo",
+    process.env.SUPER_ADMIN_PASSWORD ?? "amituofo123!",
+  );
+  const adminOk = envMatch(
+    username,
+    password,
+    process.env.ADMIN_USERNAME ?? "kuka",
+    process.env.ADMIN_PASSWORD ?? "kuka-admin",
+  );
+  return superOk || adminOk;
 }

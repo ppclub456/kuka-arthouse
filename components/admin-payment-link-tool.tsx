@@ -3,10 +3,13 @@
 import { useMemo, useState } from "react";
 import { PRODUCTS } from "@/data/products";
 
-type Mode = "catalog" | "custom";
+/** invoice = single total AUD (order); catalog / custom = existing flows */
+type Mode = "invoice" | "catalog" | "custom";
 
 export function AdminPaymentLinkTool() {
-  const [mode, setMode] = useState<Mode>("catalog");
+  const [mode, setMode] = useState<Mode>("invoice");
+  const [invoiceTitle, setInvoiceTitle] = useState("");
+  const [invoiceTotal, setInvoiceTotal] = useState("");
   const [productId, setProductId] = useState(PRODUCTS[0]?.id ?? "");
   const [customTitle, setCustomTitle] = useState("");
   const [catalogOverride, setCatalogOverride] = useState("");
@@ -17,7 +20,15 @@ export function AdminPaymentLinkTool() {
 
   const selected = PRODUCTS.find((p) => p.id === productId);
 
+  const qtyParsed = Number.parseInt(quantity, 10);
+  const qtySafe =
+    Number.isFinite(qtyParsed) && qtyParsed > 0 ? qtyParsed : 1;
+
   const resolvedUnitAud = useMemo(() => {
+    if (mode === "invoice") {
+      const n = Number.parseFloat(invoiceTotal.trim() || "0");
+      return Number.isFinite(n) ? n : 0;
+    }
     if (mode === "custom") {
       const n = Number.parseFloat(customAmount.trim() || "0");
       return Number.isFinite(n) ? n : 0;
@@ -28,31 +39,46 @@ export function AdminPaymentLinkTool() {
       return Number.isFinite(n) ? n : selected.priceAud;
     }
     return selected.priceAud;
-  }, [mode, selected, usePriceOverride, catalogOverride, customAmount]);
+  }, [
+    mode,
+    selected,
+    usePriceOverride,
+    catalogOverride,
+    customAmount,
+    invoiceTotal,
+  ]);
+
+  const effectiveQty = mode === "invoice" ? 1 : qtySafe;
 
   const displayTitle =
-    mode === "custom"
-      ? customTitle.trim() || "Custom payment"
-      : selected?.title ?? "Item";
+    mode === "invoice"
+      ? invoiceTitle.trim() || "Payment order"
+      : mode === "custom"
+        ? customTitle.trim() || "Custom payment"
+        : selected?.title ?? "Item";
+
+  const lineTotal = resolvedUnitAud * effectiveQty;
 
   const linkUrl = useMemo(() => {
     if (typeof window === "undefined" || !generatedId) return "";
-    const qty = quantity.trim() || "1";
     const base = window.location.origin;
     const q = new URLSearchParams({
       amount: String(resolvedUnitAud),
       item: displayTitle,
-      qty,
+      qty: String(effectiveQty),
     });
     if (mode === "catalog" && productId) {
       q.set("productId", productId);
+    }
+    if (mode === "invoice") {
+      q.set("order", "1");
     }
     return `${base}/admin/pay/${generatedId}?${q.toString()}`;
   }, [
     generatedId,
     resolvedUnitAud,
     displayTitle,
-    quantity,
+    effectiveQty,
     mode,
     productId,
   ]);
@@ -64,26 +90,33 @@ export function AdminPaymentLinkTool() {
   const input =
     "mt-2 w-full border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-cyan-400/50 focus:outline-none";
 
-  const qtyNum = Number.parseInt(quantity, 10);
-  const lineTotal =
-    resolvedUnitAud * (Number.isFinite(qtyNum) && qtyNum > 0 ? qtyNum : 1);
-
   return (
     <div className="ai-panel rounded-sm p-6 sm:p-8">
       <h2 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-cyan-400/80">
-        Payment link generator
+        Payment link · orders
       </h2>
       <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-        Create a shareable URL for a customer to review the amount and pay
-        (simulated checkout). Use a catalog product, or a fully custom title
-        and amount.
+        Super admin: create a one-off payment URL (simulated checkout). Send the
+        link to the customer — they see the amount and can pay. Use{" "}
+        <strong className="text-[var(--foreground)]">Invoice total</strong> for
+        any AUD amount in one line.
       </p>
 
       <fieldset className="mt-8 space-y-3">
         <legend className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
           Source
         </legend>
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--foreground)]">
+            <input
+              type="radio"
+              name="pay-mode"
+              checked={mode === "invoice"}
+              onChange={() => setMode("invoice")}
+              className="border-cyan-500/40 bg-[var(--input-bg)]"
+            />
+            Invoice total (any amount)
+          </label>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--foreground)]">
             <input
               type="radio"
@@ -102,13 +135,51 @@ export function AdminPaymentLinkTool() {
               onChange={() => setMode("custom")}
               className="border-cyan-500/40 bg-[var(--input-bg)]"
             />
-            Custom amount
+            Custom unit × qty
           </label>
         </div>
       </fieldset>
 
       <div className="mt-8 space-y-5">
-        {mode === "catalog" ? (
+        {mode === "invoice" ? (
+          <>
+            <div>
+              <label
+                htmlFor="inv-title"
+                className="text-[11px] uppercase tracking-wider text-slate-400"
+              >
+                Customer-facing title / memo
+              </label>
+              <input
+                id="inv-title"
+                value={invoiceTitle}
+                onChange={(e) => setInvoiceTitle(e.target.value)}
+                className={input}
+                placeholder="e.g. Order #4821 · Custom print balance"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="inv-total"
+                className="text-[11px] uppercase tracking-wider text-slate-400"
+              >
+                Total due (AUD) — one payment
+              </label>
+              <input
+                id="inv-total"
+                inputMode="decimal"
+                value={invoiceTotal}
+                onChange={(e) => setInvoiceTotal(e.target.value)}
+                className={input}
+                placeholder="0.00"
+              />
+              <p className="mt-1.5 text-[11px] text-slate-500">
+                Quantity is fixed to 1. Customer pays exactly this total (plus
+                any fee logic you add later).
+              </p>
+            </div>
+          </>
+        ) : mode === "catalog" ? (
           <>
             <div>
               <label
@@ -157,6 +228,22 @@ export function AdminPaymentLinkTool() {
                 />
               </div>
             ) : null}
+            <div>
+              <label
+                htmlFor="qty-pay"
+                className="text-[11px] uppercase tracking-wider text-slate-400"
+              >
+                Quantity
+              </label>
+              <input
+                id="qty-pay"
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className={input}
+              />
+            </div>
           </>
         ) : (
           <>
@@ -172,7 +259,7 @@ export function AdminPaymentLinkTool() {
                 value={customTitle}
                 onChange={(e) => setCustomTitle(e.target.value)}
                 className={input}
-                placeholder="e.g. Rush fee, Custom commission"
+                placeholder="e.g. Rush fee, Commission"
               />
             </div>
             <div>
@@ -180,7 +267,7 @@ export function AdminPaymentLinkTool() {
                 htmlFor="custom-amt"
                 className="text-[11px] uppercase tracking-wider text-slate-400"
               >
-                Amount (AUD) — unit price
+                Unit price (AUD)
               </label>
               <input
                 id="custom-amt"
@@ -191,29 +278,31 @@ export function AdminPaymentLinkTool() {
                 placeholder="0.00"
               />
             </div>
+            <div>
+              <label
+                htmlFor="qty-pay2"
+                className="text-[11px] uppercase tracking-wider text-slate-400"
+              >
+                Quantity
+              </label>
+              <input
+                id="qty-pay2"
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className={input}
+              />
+            </div>
           </>
         )}
-
-        <div>
-          <label htmlFor="qty-pay" className="text-[11px] uppercase tracking-wider text-slate-400">
-            Quantity
-          </label>
-          <input
-            id="qty-pay"
-            type="number"
-            min={1}
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            className={input}
-          />
-        </div>
 
         <p className="text-[12px] text-[var(--muted-foreground)]">
           Preview:{" "}
           <span className="font-medium text-[var(--foreground)]">
             {displayTitle}
           </span>{" "}
-          · {quantity || "1"} × {resolvedUnitAud.toFixed(2)} AUD ={" "}
+          · {effectiveQty} × {resolvedUnitAud.toFixed(2)} AUD ={" "}
           <span className="text-cyan-300/90">{lineTotal.toFixed(2)} AUD</span>
         </p>
 
@@ -228,7 +317,10 @@ export function AdminPaymentLinkTool() {
 
       {generatedId && (
         <div className="mt-10">
-          <label htmlFor="link-out" className="text-[11px] uppercase tracking-wider text-slate-400">
+          <label
+            htmlFor="link-out"
+            className="text-[11px] uppercase tracking-wider text-slate-400"
+          >
             Shareable URL
           </label>
           <textarea

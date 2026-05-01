@@ -39,6 +39,7 @@ export default async function AdminPayPage({ params, searchParams }: Props) {
   const amount = parseAmount(firstString(sp.amount));
   const qty = parseQty(firstString(sp.qty));
   const productId = firstString(sp.productId)?.trim();
+  const isInvoiceOrder = firstString(sp.order) === "1";
 
   const product = productId
     ? PRODUCTS.find((p) => p.id === productId)
@@ -51,6 +52,9 @@ export default async function AdminPayPage({ params, searchParams }: Props) {
     <div className="mx-auto flex min-h-[70vh] w-full max-w-md flex-1 flex-col justify-center px-4 py-16 sm:px-6">
       <p className="text-[10px] font-medium uppercase tracking-[0.35em] text-slate-500">
         Pay · Kuka Arthouse
+        {isInvoiceOrder ? (
+          <span className="ml-2 text-cyan-500/80">· invoice</span>
+        ) : null}
       </p>
       <h1 className="mt-4 text-lg font-semibold text-[var(--foreground)]">
         {displayTitle}

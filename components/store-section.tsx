@@ -10,8 +10,7 @@ import {
   CATEGORY_TAB_UPPER,
   parseCategoryParam,
 } from "@/lib/categories";
-import { MOA_FORMAT_OPTIONS, MOA_LICENSE_OPTIONS } from "@/lib/moa-constants";
-import type { Product, ProductCategory, ProductLicense } from "@/lib/types";
+import type { Product, ProductCategory } from "@/lib/types";
 import { STORE_BRAND } from "@/data/products";
 
 type FilterKey = "all" | ProductCategory;
@@ -19,15 +18,11 @@ type FilterKey = "all" | ProductCategory;
 type FilterState = {
   priceMin: string;
   priceMax: string;
-  formats: string[];
-  license: "any" | ProductLicense;
 };
 
 const defaultFilters: FilterState = {
   priceMin: "",
   priceMax: "",
-  formats: [],
-  license: "any",
 };
 
 function tabClass(active: boolean) {
@@ -49,13 +44,6 @@ function matchesFilters(product: Product, applied: FilterState): boolean {
     return false;
   }
   if (max !== null && Number.isFinite(max) && product.priceAud > max) {
-    return false;
-  }
-  if (applied.formats.length > 0) {
-    const ok = applied.formats.some((f) => product.formats.includes(f));
-    if (!ok) return false;
-  }
-  if (applied.license !== "any" && product.license !== applied.license) {
     return false;
   }
   return true;
@@ -96,15 +84,6 @@ export function StoreSection({ products }: { products: Product[] }) {
     return list;
   }, [products, activeFilter, applied]);
 
-  function toggleDraftFormat(fmt: string) {
-    setDraft((d) => ({
-      ...d,
-      formats: d.formats.includes(fmt)
-        ? d.formats.filter((x) => x !== fmt)
-        : [...d.formats, fmt],
-    }));
-  }
-
   function applyFilters() {
     setApplied({ ...draft });
   }
@@ -126,10 +105,10 @@ export function StoreSection({ products }: { products: Product[] }) {
             id="resources-heading"
             className="text-center text-[11px] font-semibold uppercase tracking-[0.32em] text-cyan-400/90"
           >
-            Looking for art resources ?
+            Original-style wall art · physical prints
           </h2>
           <p className="mt-3 text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--foreground)]">
-            We got you covered.
+            Fixed size {`70 × 100 cm`} — Japanese, masters, vintage, floral &amp; abstract.
           </p>
           <nav
             className="mt-12 flex flex-wrap justify-center gap-x-3 gap-y-2 sm:gap-x-5"
@@ -192,7 +171,7 @@ export function StoreSection({ products }: { products: Product[] }) {
 
         {showFilters && (
           <div className="ai-panel mt-8 border border-[var(--border)] p-6 shadow-[0_0_40px_rgba(99,102,241,0.06)]">
-            <div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-8 md:grid-cols-2">
               <fieldset>
                 <legend className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-500/80">
                   Category
@@ -223,7 +202,7 @@ export function StoreSection({ products }: { products: Product[] }) {
 
               <fieldset>
                 <legend className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-500/80">
-                  Price Range
+                  Price Range (AUD)
                 </legend>
                 <div className="mt-4 flex items-center gap-2">
                   <input
@@ -248,65 +227,9 @@ export function StoreSection({ products }: { products: Product[] }) {
                     className="w-full border border-[var(--border)] bg-[var(--input-bg)] px-2 py-2 text-sm text-[var(--foreground)]"
                   />
                 </div>
-              </fieldset>
-
-              <fieldset>
-                <legend className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-500/80">
-                  File Format
-                </legend>
-                <ul className="mt-4 space-y-2">
-                  {MOA_FORMAT_OPTIONS.map((fmt) => (
-                    <li key={fmt}>
-                      <label className="flex cursor-pointer items-center gap-2 text-[12px] text-[var(--foreground)]">
-                        <input
-                          type="checkbox"
-                          checked={draft.formats.includes(fmt)}
-                          onChange={() => toggleDraftFormat(fmt)}
-                          className="rounded border-cyan-500/40 bg-[var(--input-bg)]"
-                        />
-                        {fmt}
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              </fieldset>
-
-              <fieldset>
-                <legend className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-500/80">
-                  License Type
-                </legend>
-                <ul className="mt-4 space-y-2">
-                  <li>
-                    <label className="flex cursor-pointer items-center gap-2 text-[12px] text-[var(--foreground)]">
-                      <input
-                        type="radio"
-                        name="moa-license"
-                        checked={draft.license === "any"}
-                        onChange={() =>
-                          setDraft((d) => ({ ...d, license: "any" }))
-                        }
-                        className="border-cyan-500/40 bg-[var(--input-bg)]"
-                      />
-                      Any
-                    </label>
-                  </li>
-                  {MOA_LICENSE_OPTIONS.map((opt) => (
-                    <li key={opt.id}>
-                      <label className="flex cursor-pointer items-center gap-2 text-[12px] text-[var(--foreground)]">
-                        <input
-                          type="radio"
-                          name="moa-license"
-                          checked={draft.license === opt.id}
-                          onChange={() =>
-                            setDraft((d) => ({ ...d, license: opt.id }))
-                          }
-                          className="border-cyan-500/40 bg-[var(--input-bg)]"
-                        />
-                        {opt.label}
-                      </label>
-                    </li>
-                  ))}
-                </ul>
+                <p className="mt-3 text-[11px] leading-relaxed text-[var(--muted-foreground)]">
+                  Every piece is a physical print at {`70 × 100 cm`}. Shipping is a flat rate at checkout.
+                </p>
               </fieldset>
             </div>
 

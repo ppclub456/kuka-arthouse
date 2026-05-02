@@ -5,7 +5,7 @@ export const CATEGORY_LABELS: Record<ProductCategory, string> = {
   "japanese-art": "Japanese Art",
   "famous-art": "Famous Art",
   "upcoming-artists": "Upcoming Artists",
-  "vintage-prints": "Vintage Prints",
+  "vintage-prints": "Vintage wall art",
   "flower-art": "Floral Art",
   abstract: "Abstract",
 };

@@ -53,7 +53,7 @@ export function CartDrawer() {
           <div className="flex-1 overflow-y-auto px-6 py-6">
             {lines.length === 0 ? (
               <p className="text-sm text-[var(--muted-foreground)]">
-                Your cart is empty. Browse the catalog to add digital works.
+                Your cart is empty. Browse physical prints ({`70 × 100 cm`}) in the store.
               </p>
             ) : (
               <ul className="space-y-6">

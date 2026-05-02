@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: "%s | Kuka Arthouse",
   },
   description:
-    "Digital art marketplace — curated prints & pieces. Japanese, famous, upcoming artists, vintage, floral & abstract. Guest checkout; optional login.",
+    "Physical fine-art reproductions shipped to Australia & beyond — wall art inspired by Japanese, famous masters, new artists, vintage, floral & abstract. Standard size 70 × 100 cm. Guest checkout; optional login.",
 };
 
 export default function RootLayout({

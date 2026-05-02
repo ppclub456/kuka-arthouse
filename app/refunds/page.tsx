@@ -44,23 +44,18 @@ export default function RefundsPolicyPage() {
 
       <h2>3. Change of mind (non statutory)</h2>
       <p>
-        You may notify us within 14 days after delivery — or where digital goods unlock
-        instantly, within 14 days after purchase confirmation — requesting a discretionary change-of-mind remedy
+        You may notify us within 14 days after delivery requesting a discretionary change-of-mind remedy
         offered at our goodwill. Acceptance depends on the product type:
       </p>
       <ul>
         <li>
-          Physical goods eligible for discretionary return generally must arrive back to us unused,
+          Physical prints eligible for discretionary return generally must arrive back to us unused,
           resaleable packaging where practical, freight prepaid unless we agree otherwise, and bear
           the original identifiers.
         </li>
         <li>
           Printed or customised items made to specification may have limited or no discretionary
           return entitlement once manufacture starts.
-        </li>
-        <li>
-          Downloaded or delivered intangible files may be legally non refundable once substantially
-          performed if consumer law agrees; we nonetheless assess goodwill requests individually.
         </li>
       </ul>
 

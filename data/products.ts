@@ -1,27 +1,47 @@
 import type { Product } from "@/lib/types";
 
 /**
- * Categories mirror Inka Arthouse "Shop Wall Art By Category" collections:
- * japanese-art, famous-art, upcoming artists, vintage prints, floral (flower-art), abstract.
+ * Categories mirror reference wall-art collections:
+ * japanese-art, famous-art, upcoming artists, vintage, floral (flower-art), abstract.
+ * All listings are described as physical prints at a uniform size (see `defaultPhysicalDescription`).
  * Imagery: Shopify CDN — demo only; keep vendor permission on file.
- * Source: https://inkaarthouse.com/
  *
- * Catalog list prices are whole AUD amounts; literals with decimals are truncated with Math.floor inside helper p().
+ * Catalog list prices are whole AUD amounts; literals with decimals are truncated with Math.floor inside helper `p`.
  */
 export const STORE_BRAND = "Kuka Arthouse";
 
+const STANDARD_SIZE_CM = "70 × 100 cm";
+
+function listingLooksLikeMultiPanel(title: string): boolean {
+  const t = title.trim();
+  return (
+    /^(?:\d+x\b|\d+\s*x\s+)/i.test(t) ||
+    /\bset of\s*(?:two|three|four|2|3|4)\b/i.test(t) ||
+    /\bgallery wall\b/i.test(t)
+  );
+}
+
+/** Default copy when a product omits `description:` — every SKU uses the same physical dimensions. */
+function defaultPhysicalDescription(title: string): string {
+  const bundle =
+    listingLooksLikeMultiPanel(title)
+      ? "Multiple panels in one purchase — each panel is produced at our standard dimensions. "
+      : "";
+  return `${title}. ${bundle}Fine-art reproduction on archival-grade stock as a physical print (${STANDARD_SIZE_CM}), colour-balanced for wall display. Shipped with protective packaging; ready for framing.`;
+}
+
 function p(
-  args: Omit<Product, "formats" | "license"> & {
-    formats?: string[];
-    license?: Product["license"];
-  },
+  args: Pick<
+    Product,
+    "id" | "title" | "priceAud" | "imageSrc" | "imageAlt" | "category"
+  > & { description?: string },
 ): Product {
-  const { formats, license, ...rest } = args;
   return {
-    ...rest,
-    priceAud: Math.floor(rest.priceAud),
-    formats: formats ?? ["PNG", "SVG"],
-    license: license ?? "commercial",
+    ...args,
+    description: args.description ?? defaultPhysicalDescription(args.title),
+    priceAud: Math.floor(args.priceAud),
+    formats: ["Physical print"],
+    license: "personal",
   };
 }
 
@@ -33,8 +53,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/Vintage_Japanese_Frog_Wall_Art_Print_By_Inka_Arthouse.jpg?width=1000",
     imageAlt: "Vintage Japanese Frog (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-002",
@@ -43,8 +61,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/The_Great_Wave_Wall_Art_Print_by_Hokusai_-_Inka_Arthouse.jpg?width=1000",
     imageAlt: "The Great Wave Off Kanagawa by Katsushika Hokusai (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-003",
@@ -53,8 +69,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/Set_Of_Two_Japanese_Abstract_Wall_Art_Prints_By_Taguchi_Tomoki_-_Inka_Arthouse.jpg?width=1000",
     imageAlt: "2x Japanese Art Prints | Taguchi Tomoki (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-004",
@@ -63,8 +77,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/Set_Of_Three_Vintage_Japanese_Frog_Exhibition_Wall_Art_Prints_-_Inka_Arthouse.jpg?width=1000",
     imageAlt: "3x Japanese Frog Art Exhibitions (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-005",
@@ -73,8 +85,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/Japanese_Tiger_Wall_Art_Set_Of_Two_By_Inka_Arthouse.jpg?width=1000",
     imageAlt: "2x Japanese Tiger Art Prints (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-006",
@@ -83,8 +93,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Hydrangea-and-Swallow-by-Katsushika-Hokusai-Gelato-1669436792.jpg?width=1000",
     imageAlt: "Hydrangea and Swallow by Katsushika Hokusai (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-007",
@@ -93,8 +101,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/Set_Of_Three_Stylised_Japanese_Frog_Wall_Art_Prints_by_Inka_Arthouse.jpg?width=1000",
     imageAlt: "3x Japanese Frog Exhibitions (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-008",
@@ -103,8 +109,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_28.jpg?width=1000",
     imageAlt: "Japanese Green Frog Art Print (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-009",
@@ -113,8 +117,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455PSD_1x1_-2025-02-25T180056.710.jpg?width=1000",
     imageAlt: "The Great Wave by Hokusai (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-010",
@@ -123,8 +125,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_76.jpg?width=1000",
     imageAlt: "Japanese Frog Art Print (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-011",
@@ -133,8 +133,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-02-26T143439.462.jpg?width=1000",
     imageAlt: "Japanese Cyan by Hokusai (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-012",
@@ -143,8 +141,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-02-25T233754.638.jpg?width=1000",
     imageAlt: "Japanese Stork By Hokusai (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-013",
@@ -153,8 +149,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-02-26T144047.605.jpg?width=1000",
     imageAlt: "Minimal Green Japanese Print (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-014",
@@ -163,8 +157,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_50.jpg?width=1000",
     imageAlt: "Minimal Pink Japanese Print (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-015",
@@ -173,8 +165,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N181_PSD_1x1_19.jpg?width=1000",
     imageAlt: "2x Japanese Art Prints by Bijutsu Sekai (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-016",
@@ -183,8 +173,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-02-26T143026.800.jpg?width=1000",
     imageAlt: "Purple Waves by Hokusai (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-017",
@@ -193,8 +181,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_69.jpg?width=1000",
     imageAlt: "Vintage Japanese Abstract Art Print (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-018",
@@ -203,8 +189,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455PSD_1x1_-2025-02-26T150222.265.jpg?width=1000",
     imageAlt: "Mount Fuji By Kamisaka Sekka (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-019",
@@ -213,8 +197,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N344_PSD_1x1_16.jpg?width=1000",
     imageAlt: "3x Vintage Japanese Exhibitions by Ohara Koson (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-020",
@@ -223,8 +205,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Green-Landscapes-by-Bijutsu-Sekai-Gelato-1669436627.jpg?width=1000",
     imageAlt: "Green Landscapes by Bijutsu Sekai (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-021",
@@ -233,8 +213,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Green-Peacock-by-Ohara-Koson-Gelato-1673742697.jpg?width=1000",
     imageAlt: "Green Peacock by Ohara Koson (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-022",
@@ -243,8 +221,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-02-26T151023.324.jpg?width=1000",
     imageAlt: "The Great Wave off Kanagawa by Hokusai (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-023",
@@ -253,8 +229,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Blue-Vines-by-Bijutsu-Sekai-Gelato-1669436617.jpg?width=1000",
     imageAlt: "Blue Vines by Bijutsu Sekai (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-024",
@@ -263,8 +237,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N127_PSD_1x1_27.jpg?width=1000",
     imageAlt: "Red Fuji by Katsushika Hokusai (Inka Arthouse)",
     category: "japanese-art",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-025",
@@ -273,8 +245,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-06-11T225217.138.jpg?width=1000",
     imageAlt: "Mona Lisa by Leonardo da Vinci (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-026",
@@ -283,8 +253,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-06-11T233147.616.jpg?width=1000",
     imageAlt: "The Starry Night by Vincent van Gogh (Inka Arthouse)",
     category: "famous-art",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-027",
@@ -293,8 +261,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-06-11T233717.969.jpg?width=1000",
     imageAlt: "The Scream 1893 by Edvard Munch (Inka Arthouse)",
     category: "famous-art",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-028",
@@ -303,8 +269,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Girl-with-the-Pearl-Earring-by-Johannes-Vermeer-Gelato-1669432029.jpg?width=1000",
     imageAlt: "Girl with the Pearl Earring by Johannes Vermeer (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-029",
@@ -313,8 +277,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-02-25T174953.603.jpg?width=1000",
     imageAlt: "Open Window 1905 by Henri Matisse (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-030",
@@ -323,8 +285,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-06-11T230542.141.jpg?width=1000",
     imageAlt: "Cafe Terrace by Vincent Van Gogh (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-031",
@@ -333,8 +293,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Happy-Sailor-Kissing-Nurse-1945-Art-Print-Gelato-1675473977.jpg?width=1000",
     imageAlt: "Happy Sailor Kissing Nurse 1945 Art Print (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-032",
@@ -343,8 +301,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/Open_Window_Wall_Art_Print_by_Henri_Matisse_-_Inka_Arthouse.jpg?width=1000",
     imageAlt: "Open Window, Collioure by Henri Matisse (Inka Arthouse)",
     category: "famous-art",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-033",
@@ -353,8 +309,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-09-27T121713.624.jpg?width=1000",
     imageAlt: "Water Lilies 1906 by Claude Monet (Inka Arthouse)",
     category: "famous-art",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-034",
@@ -363,8 +317,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/William_Morris_Exhibition_Wall_Art_Print_by_Inka_Arthouse.jpg?width=1000",
     imageAlt: "William Morris Exhibition (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-035",
@@ -373,8 +325,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_6.jpg?width=1000",
     imageAlt: "Henri Matisse Blue Nude (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-036",
@@ -383,8 +333,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455PSD_1x1_-2025-02-25T173621.447.jpg?width=1000",
     imageAlt: "Dancers in Red by Henri Matisse (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-037",
@@ -393,8 +341,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N181_PSD_1x1_39.jpg?width=1000",
     imageAlt: "The Cut Outs by Henri Matisse Set of 2 (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-038",
@@ -403,8 +349,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/Set_Of_Three_Midcentury_Wall_Art_Prints_-_Inka_Arthouse.jpg?width=1000",
     imageAlt: "Midcentury Set of 3 Art Prints (Inka Arthouse)",
     category: "famous-art",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-039",
@@ -413,8 +357,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455PSD_1x1_-2025-02-26T143710.148.jpg?width=1000",
     imageAlt: "Colours by Henri Matisse (Inka Arthouse)",
     category: "famous-art",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-040",
@@ -423,8 +365,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Greenery-by-William-Morris-Gelato-1669434500.jpg?width=1000",
     imageAlt: "Greenery by William Morris (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-041",
@@ -433,8 +373,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_51.jpg?width=1000",
     imageAlt: "Vintage Flower by William Morris (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-042",
@@ -443,8 +381,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/Set_Of_3_Abstract_Exhibition_Wall_Art_Prints_By_Henri_Matisse_-_Inka_Arthouse.jpg?width=1000",
     imageAlt: "3x Exhibitions by Henri Matisse (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-043",
@@ -453,8 +389,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/The_Kiss_Wall_Art_Print_by_Gustav_Klimt_-_Inka_Arthouse.jpg?width=1000",
     imageAlt: "The Kiss 1907-1908 by Gustav Klimt (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-044",
@@ -463,8 +397,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N181_PSD_1x1_41.jpg?width=1000",
     imageAlt: "Hilma af Klint Set of 2 (Inka Arthouse)",
     category: "famous-art",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-045",
@@ -473,8 +405,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-09-27T122548.186.jpg?width=1000",
     imageAlt: "In Arles by Van Gogh (Inka Arthouse)",
     category: "famous-art",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-046",
@@ -483,8 +413,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-06-11T230131.354.jpg?width=1000",
     imageAlt: "Flowers & Birds by William Morris (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-047",
@@ -493,8 +421,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_65.jpg?width=1000",
     imageAlt: "White Framed Polyphonically 1930 by Paul Klee (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-048",
@@ -503,8 +429,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N181_PSD_1x1_35.jpg?width=1000",
     imageAlt: "Monet x Van Gogh Set of 2 (Inka Arthouse)",
     category: "famous-art",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-049",
@@ -513,8 +437,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N344PSD_1x1_27.jpg?width=1000",
     imageAlt: "Italian Coffee Collection Set of 3 Art Prints (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-050",
@@ -523,8 +445,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N127PSD_1x1_67.jpg?width=1000",
     imageAlt: "Better Together Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-051",
@@ -533,8 +453,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455PSD_1x1_6.jpg?width=1000",
     imageAlt: "Western Cowgirl Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-052",
@@ -543,8 +461,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455PSD_1x1_5.jpg?width=1000",
     imageAlt: "Red Cowgirl Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-053",
@@ -553,8 +469,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N127_PSD_1x1_66.jpg?width=1000",
     imageAlt: "Three Ducks Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-054",
@@ -563,8 +477,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_3_df44cbd9-3495-48e6-95bf-4089751852ec.jpg?width=1000",
     imageAlt: "The Reader Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-055",
@@ -573,8 +485,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455PSD_1x1_4.jpg?width=1000",
     imageAlt: "I Love You Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-056",
@@ -583,8 +493,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455PSD_1x1_1.jpg?width=1000",
     imageAlt: "Two Men Canoe Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-057",
@@ -593,8 +501,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_2_9a4be2c9-82a2-4473-862c-4cdb6237a6b9.jpg?width=1000",
     imageAlt: "Coastal Walk Dog Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-058",
@@ -603,8 +509,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_b56f9961-9e07-4d4a-ab0c-c06cbfb66642.jpg?width=1000",
     imageAlt: "Afternoon Reading Woman Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-059",
@@ -613,8 +517,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2026-02-08T113018.176.jpg?width=1000",
     imageAlt: "Silent Figure Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-060",
@@ -623,8 +525,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455PSD_1x1_-2026-02-08T112851.023.jpg?width=1000",
     imageAlt: "Cowgirl Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-061",
@@ -633,8 +533,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2026-02-08T112756.650.jpg?width=1000",
     imageAlt: "Resting Leopard Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-062",
@@ -643,8 +541,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455PSD_1x1_-2026-02-08T112832.552.jpg?width=1000",
     imageAlt: "Summer Swimmers Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-063",
@@ -653,8 +549,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455PSD_1x1_-2026-02-08T112739.184.jpg?width=1000",
     imageAlt: "Swimmers In Motion Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-064",
@@ -663,8 +557,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/PSD_3_37e60c4d-d41b-422c-830f-ffd9ae422ed7.jpg?width=1000",
     imageAlt: "Golden Hour Gallery Wall (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-065",
@@ -673,8 +565,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/PSD.jpg?width=1000",
     imageAlt: "Collected Calm Gallery Wall (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-066",
@@ -683,8 +573,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2026-01-19T182836.481.jpg?width=1000",
     imageAlt: "Diva Ducks Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-067",
@@ -693,8 +581,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2026-01-19T182814.052.jpg?width=1000",
     imageAlt: "Basketball Dreams Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-068",
@@ -703,8 +589,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2026-01-19T182255.566.jpg?width=1000",
     imageAlt: "Morning Coffee Dog Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-069",
@@ -713,8 +597,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2026-01-19T182854.912.jpg?width=1000",
     imageAlt: "Book Worm Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-070",
@@ -723,8 +605,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-12-28T234342.953.jpg?width=1000",
     imageAlt: "Martinis at Eight Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-071",
@@ -733,8 +613,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-12-28T234234.087.jpg?width=1000",
     imageAlt: "Retro Tennis Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-072",
@@ -743,8 +621,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-12-28T233604.597.jpg?width=1000",
     imageAlt: "Grumpy Cat Art Print (Inka Arthouse)",
     category: "upcoming-artists",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-073",
@@ -753,8 +629,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/Smoking_Nuns_Black_White_Wall_Art_Print_By_Inka_Arthouse.jpg?width=1000",
     imageAlt: "Smoking Nuns 1950 (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-074",
@@ -763,8 +637,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_9.jpg?width=1000",
     imageAlt: "Vogue Magazine Cover April 1918 (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-075",
@@ -773,8 +645,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_47.jpg?width=1000",
     imageAlt: "Audrey Hepburn 1940s (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-076",
@@ -783,8 +653,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/Set_Of_Three_Cocktail_Wall_Art_Prints_by_Inka_Arthouse.jpg?width=1000",
     imageAlt: "Aperol Spritz Set of 3 (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-077",
@@ -793,8 +661,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_67.jpg?width=1000",
     imageAlt: "Aperol Vintage Poster (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-078",
@@ -803,8 +669,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_36.jpg?width=1000",
     imageAlt: "Campari Vintage Poster (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-079",
@@ -813,8 +677,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Catz-Bitters-Vintage-Poster-Gelato-1669436848.jpg?width=1000",
     imageAlt: "Catz Bitters Vintage Poster (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-080",
@@ -823,8 +685,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Monte-Carlo-Girl-Poster-Gelato-1669436430.jpg?width=1000",
     imageAlt: "Monte Carlo Girl Poster (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-081",
@@ -833,8 +693,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-09-27T124048.079.jpg?width=1000",
     imageAlt: "Vermouth Bianco Vintage Print (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-082",
@@ -843,8 +701,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-02-26T160411.670.jpg?width=1000",
     imageAlt: "Vogue Magazine Cover July 1920 (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-083",
@@ -853,8 +709,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-06-11T231250.900.jpg?width=1000",
     imageAlt: "Campari Soda (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-084",
@@ -863,8 +717,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Vintage-Cordial-Campari-Poster-Gelato-1669436901.jpg?width=1000",
     imageAlt: "Vintage Cordial Campari Poster (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-085",
@@ -873,8 +725,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_88.jpg?width=1000",
     imageAlt: "Cordial Campari Vintage Poster (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-086",
@@ -883,8 +733,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Campari-Woman-Vintage-Art-Poster-Gelato-1669436882.jpg?width=1000",
     imageAlt: "Campari Woman Vintage Art Poster (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-087",
@@ -893,8 +741,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Cote-d-Azur-Vintage-Car-Gelato-1669436443.jpg?width=1000",
     imageAlt: "Cote d'Azur Vintage Car (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-088",
@@ -903,8 +749,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Bitter-Campari-Gelato-1669433231.jpg?width=1000",
     imageAlt: "Bitter Campari (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-089",
@@ -913,8 +757,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Bitter-Campari-Orange-Gelato-1669433929.jpg?width=1000",
     imageAlt: "Bitter Campari Orange (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-090",
@@ -923,8 +765,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-09-27T123735.899.jpg?width=1000",
     imageAlt: "Vintage Paris Poster (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-091",
@@ -933,8 +773,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Copy-of-Campari-1921-Vintage-Poster-Gelato-1682071729_e14ed59e-491b-4981-ac6a-4252881f1a72.jpg?width=1000",
     imageAlt: "Mossant 3 Hats by Leonetto Cappiello (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-092",
@@ -943,8 +781,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Copy-of-Cordial-Campari-Vintage-Poster-Gelato-1682071116_9a1d4b4e-7e66-4506-b595-86db086b5ec7.jpg?width=1000",
     imageAlt: "Campari 1921 Vintage Poster (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-093",
@@ -953,8 +789,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Curacao-Vintage-Travel-Poster-Gelato-1669436742.jpg?width=1000",
     imageAlt: "Curacao Vintage Travel Poster (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-094",
@@ -963,8 +797,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Campari-Cordial-Vintage-Poster-Gelato-1669436867.jpg?width=1000",
     imageAlt: "Campari Cordial Vintage Poster (Inka Arthouse)",
     category: "vintage-prints",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-095",
@@ -973,8 +805,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/main.jpg?width=1000",
     imageAlt: "Flower Market by Henri Matisse (Inka Arthouse)",
     category: "flower-art",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-096",
@@ -983,8 +813,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-02-25T175552.815.jpg?width=1000",
     imageAlt: "Rose Flower by Henri Matisse (Inka Arthouse)",
     category: "flower-art",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-097",
@@ -993,8 +821,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-06-11T232726.318.jpg?width=1000",
     imageAlt: "Italian Landscape by Gustav Klimt Art Print (Inka Arthouse)",
     category: "flower-art",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-098",
@@ -1003,8 +829,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-02-25T172720.077.jpg?width=1000",
     imageAlt: "Amsterdam Flower Market (Inka Arthouse)",
     category: "flower-art",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-099",
@@ -1013,8 +837,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-02-25T173451.902.jpg?width=1000",
     imageAlt: "Copenhagen Flower Market (Inka Arthouse)",
     category: "flower-art",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-100",
@@ -1023,8 +845,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N181_PSD_1x1_40.jpg?width=1000",
     imageAlt: "2x Mexican Flower Market Prints (Inka Arthouse)",
     category: "flower-art",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-101",
@@ -1033,8 +853,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_-_2025-09-27T120909.553.jpg?width=1000",
     imageAlt: "Botanical Flower Abstract by Elena Ristova (Inka Arthouse)",
     category: "flower-art",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-102",
@@ -1043,8 +861,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N344_PSD_1x1_8.jpg?width=1000",
     imageAlt: "Flower Market Set of 3 Paris (Inka Arthouse)",
     category: "flower-art",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-103",
@@ -1053,8 +869,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Japanese-Lotus-Flowers-by-Ogawa-Kazumasa-Gelato-1673692512.jpg?width=1000",
     imageAlt: "Japanese Lotus Flowers by Ogawa Kazumasa (Inka Arthouse)",
     category: "flower-art",
-    formats: ["PNG"],
-    license: "personal",
   }),
   p({
     id: "inka-104",
@@ -1063,8 +877,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/products/Four-Fruits-by-William-Morris-Gelato-1669436565.jpg?width=1000",
     imageAlt: "Four Fruits by William Morris (Inka Arthouse)",
     category: "flower-art",
-    formats: ["AI", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-105",
@@ -1073,8 +885,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/Green_Abstract_Set_Of_Two_Wall_Art_Prints_by_Elena_Ristova_-_Inka_Arthouse.jpg?width=1000",
     imageAlt: "Green Abstract Set by Elena Ristova (Inka Arthouse)",
     category: "abstract",
-    formats: ["AI", "PNG", "SVG"],
-    license: "commercial",
   }),
   p({
     id: "inka-106",
@@ -1083,8 +893,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/M455_PSD_1x1_22.jpg?width=1000",
     imageAlt: "Blue Coral Abstract by Elena Ristova (Inka Arthouse)",
     category: "abstract",
-    formats: ["PNG", "EPS"],
-    license: "personal",
   }),
   p({
     id: "inka-107",
@@ -1093,8 +901,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N181_PSD_1x1_12.jpg?width=1000",
     imageAlt: "Beige Abstract Set by Elena Ristova (Inka Arthouse)",
     category: "abstract",
-    formats: ["PSD", "PNG"],
-    license: "extended",
   }),
   p({
     id: "inka-108",
@@ -1103,8 +909,6 @@ export const PRODUCTS: Product[] = [
     imageSrc: "https://cdn.shopify.com/s/files/1/0569/6281/0018/files/N344_PSD_1x1_24.jpg?width=1000",
     imageAlt: "3x Exhibitions by E.A. SÉGUY (Inka Arthouse)",
     category: "abstract",
-    formats: ["PNG", "SVG"],
-    license: "commercial",
   }),
 ];
 

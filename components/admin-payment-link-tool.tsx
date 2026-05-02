@@ -18,6 +18,7 @@ export function AdminPaymentLinkTool() {
   const [quantity, setQuantity] = useState("1");
   const [paymentReference, setPaymentReference] = useState("");
   const [payPageUrl, setPayPageUrl] = useState("");
+  const [issuedShortCode, setIssuedShortCode] = useState("");
   const [genError, setGenError] = useState("");
   const [genPending, setGenPending] = useState(false);
 
@@ -65,6 +66,7 @@ export function AdminPaymentLinkTool() {
   async function handleGenerate() {
     setGenError("");
     setGenPending(true);
+    setIssuedShortCode("");
     setPayPageUrl("");
 
     try {
@@ -90,6 +92,7 @@ export function AdminPaymentLinkTool() {
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
         url?: string;
+        code?: string;
       };
 
       if (!res.ok) {
@@ -103,6 +106,7 @@ export function AdminPaymentLinkTool() {
       }
 
       setPayPageUrl(data.url);
+      setIssuedShortCode(typeof data.code === "string" ? data.code : "");
     } catch {
       setGenError("Network error — try again.");
     } finally {
@@ -134,11 +138,15 @@ export function AdminPaymentLinkTool() {
           /pay
         </code>
         ).
-        Links use short signed URLs (
+        Links are 6-character codes in{" "}
         <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
           ?p=
         </code>
-        ).
+        , stored in Postgres — set{" "}
+        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
+          DATABASE_URL
+        </code>{" "}
+        and push the schema (<code className="font-mono text-[10px]">drizzle/0001_pay_links.sql</code>).
       </p>
 
       <div className="mt-6">
@@ -211,7 +219,7 @@ export function AdminPaymentLinkTool() {
                 value={invoiceTitle}
                 onChange={(e) => setInvoiceTitle(e.target.value)}
                 className={input}
-                placeholder="e.g. Order #4821 · Custom print balance"
+                placeholder="e.g. Order #4821 · Painting balance"
               />
             </div>
             <div>
@@ -388,10 +396,18 @@ export function AdminPaymentLinkTool() {
           <textarea
             id="link-out"
             readOnly
-            rows={4}
+            rows={2}
             value={payPageUrl}
             className="mt-2 w-full resize-y border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-900"
           />
+          {issuedShortCode ? (
+            <p className="mt-2 text-[11px] text-zinc-600">
+              Customer code only:{" "}
+              <span className="font-mono font-semibold tracking-wider text-zinc-900">
+                {issuedShortCode}
+              </span>
+            </p>
+          ) : null}
           <button
             type="button"
             onClick={() => void navigator.clipboard.writeText(payPageUrl)}

@@ -5,7 +5,7 @@ import { STORE_BRAND } from "@/data/products";
 
 export const metadata: Metadata = {
   title: "About",
-  description: `About ${STORE_BRAND} — a digital art marketplace for prints and creative assets.`,
+  description: `About ${STORE_BRAND} — physical reproduction wall art, curated prints at 70 × 100 cm.`,
 };
 
 export default function AboutPage() {
@@ -13,16 +13,14 @@ export default function AboutPage() {
     <LegalPageShell title="About us">
       <p>
         <strong className="text-[var(--foreground)]">{STORE_BRAND}</strong> is a
-        digital art destination: we bring together wall-ready prints, curated
-        collections, and creative pieces you can browse by mood — from Japanese
-        and famous masters to vintage, floral, abstract, and work by upcoming
-        artists.
+        wall-art studio shop: physical reproduction prints on archival stock,
+        inspired by curated collections spanning Japanese motifs, masters, vintage posters,
+        floral studies, abstracts, and work by newer artists.
       </p>
       <p>
-        Whether you are styling a room, building a portfolio reference, or
-        gifting art, we focus on clear categories, fair display pricing in AUD,
-        and a checkout that works for everyone — including guests who prefer
-        not to create an account.
+        All pieces ship as tactile artwork for framing — unified at{" "}
+        <span className="font-medium text-[var(--foreground)]">70 × 100 cm</span>{" "}
+        for easy planning on your wall layout.
       </p>
       <h2>Shopping &amp; accounts</h2>
       <p>

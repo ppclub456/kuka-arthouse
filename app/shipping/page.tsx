@@ -21,8 +21,8 @@ export default function ShippingPolicyPage() {
         {STORE_DISPATCH_REGION} unless we tell you otherwise in your order confirmation.
       </p>
       <p>
-        If a product includes digital fulfilment only, delivery details may be emailed or made
-        available in your account confirmation — separate from physical shipping below.
+        Standard catalogue pieces are reproduced as physical prints measuring{" "}
+        <strong className="text-[var(--foreground)]">{`70 × 100 cm`}</strong>; tracking and packaging details are sent with your fulfilment confirmation.
       </p>
 
       <h2>1. Order processing time</h2>
@@ -81,7 +81,7 @@ export default function ShippingPolicyPage() {
 
       <h2>7. Sustainability &amp; packaging</h2>
       <p>
-        We endeavour to reuse safe, adequate packaging consistent with preserving artwork prints;
+        We endeavour to reuse safe, adequate packaging consistent with preserving rolled or flat-mounted artwork;
         substitutions may vary.
       </p>
 

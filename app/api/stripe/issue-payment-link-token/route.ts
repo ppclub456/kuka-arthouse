@@ -4,8 +4,8 @@ import {
   type AdminQuotePayload,
 } from "@/lib/admin-quote";
 import { appBaseUrl } from "@/lib/checkout-base-url";
+import { mintPayLinkRow } from "@/lib/db/pay-link-repo";
 import { requireAdminOr401 } from "@/lib/require-admin-session";
-import { signPayLinkCompact } from "@/lib/payment-link-compact";
 
 export const dynamic = "force-dynamic";
 
@@ -29,19 +29,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const compact = signPayLinkCompact({
-      amountAud: q.lineTotalAud,
+    const code = await mintPayLinkRow({
+      amountAudCents: Math.round(q.lineTotalAud * 100),
       title: q.title,
+      reference: q.paymentReference,
       mode: q.mode,
       productId: q.productId,
-      reference: q.paymentReference,
     });
 
     const base = appBaseUrl(request.headers);
-    const qs = encodeURIComponent(compact);
-    const url = `${base}/pay?p=${qs}`;
+    const url = `${base}/pay?p=${encodeURIComponent(code)}`;
 
-    return NextResponse.json({ url });
+    return NextResponse.json({ url, code });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Could not create link";
     return NextResponse.json({ error: msg }, { status: 400 });

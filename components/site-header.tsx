@@ -23,7 +23,7 @@ export function SiteHeader() {
             {STORE_BRAND}
           </Link>
           <span className="hidden truncate text-[9px] font-medium uppercase tracking-[0.18em] text-slate-500 sm:inline sm:max-w-[min(280px,28vw)]">
-            Digital art &amp; prints
+            Physical gallery prints · {`70 × 100 cm`}
           </span>
         </div>
         <nav className="flex shrink-0 items-center gap-3 sm:gap-8">

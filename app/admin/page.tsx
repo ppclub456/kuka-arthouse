@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { AdminOrderArchive } from "@/components/admin-order-archive";
+import { AdminPayLinksTable } from "@/components/admin-pay-links-table";
 import { AdminPaymentHistory } from "@/components/admin-payment-history";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { AdminPaymentLinkTool } from "@/components/admin-payment-link-tool";
 
 export default function AdminPage() {
   return (
-    <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-16 sm:px-6">
+    <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-16 sm:px-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-zinc-700">
@@ -25,6 +27,10 @@ export default function AdminPage() {
       <div className="mt-12">
         <AdminPaymentLinkTool />
       </div>
+
+      <AdminPayLinksTable />
+
+      <AdminOrderArchive />
 
       <AdminPaymentHistory />
 

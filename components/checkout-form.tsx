@@ -9,25 +9,7 @@ import { countryLabelToIso } from "@/lib/country-iso";
 import { formatMoaPrice } from "@/lib/format";
 import { STORE_FLAT_SHIPPING_AUD } from "@/lib/pricing-store";
 import { STORE_SUPPORT_EMAIL } from "@/lib/store-contact";
-
-const COUNTRIES = [
-  "Australia",
-  "New Zealand",
-  "United States",
-  "United Kingdom",
-  "Canada",
-  "Germany",
-  "France",
-  "Japan",
-  "China",
-  "India",
-  "Brazil",
-  "Mexico",
-  "Netherlands",
-  "Italy",
-  "Spain",
-  "Other",
-];
+import { CHECKOUT_COUNTRY_LABELS } from "@/lib/checkout-countries";
 
 type TipChoice = "none" | "2" | "5" | "10" | "custom";
 
@@ -370,7 +352,7 @@ export function CheckoutForm() {
                   autoComplete="country-name"
                   className="mt-1.5 w-full border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-cyan-400/60"
                 >
-                  {COUNTRIES.map((c) => (
+                  {CHECKOUT_COUNTRY_LABELS.map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
@@ -459,8 +441,17 @@ export function CheckoutForm() {
                     {line.title}
                   </p>
                   <p className="mt-1 text-xs text-violet-400/90">
-                    {line.categoryLabel ?? "Digital"}
+                    {line.categoryLabel ?? "Fine art"}
                   </p>
+                  {line.description ? (
+                    <p className="mt-1 line-clamp-3 text-[11px] leading-relaxed text-[var(--muted-foreground)]">
+                      {line.description}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                      Physical print · {`70 × 100 cm`}
+                    </p>
+                  )}
                   <p className="mt-2 text-xs text-[var(--muted-foreground)]">
                     Qty: {line.quantity}
                   </p>

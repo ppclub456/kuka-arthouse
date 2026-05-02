@@ -57,7 +57,10 @@ export function ProductCard({ product, brandName }: Props) {
             {product.title}
           </h3>
           <p className="mt-1.5 text-[11px] leading-relaxed text-cyan-400/75">
-            by {brandName} in {categoryTitle}
+            by {brandName} · {categoryTitle}
+          </p>
+          <p className="mt-2 line-clamp-5 text-[11px] leading-relaxed text-[var(--muted-foreground)]">
+            {product.description}
           </p>
           <p className="mt-2 bg-gradient-to-r from-cyan-300 to-violet-300 bg-clip-text text-[14px] font-semibold text-transparent">
             {formatMoaPrice(product.priceAud)}

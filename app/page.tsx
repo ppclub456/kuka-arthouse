@@ -61,14 +61,15 @@ export default function HomePage() {
                 {STORE_BRAND}
               </p>
               <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.2em] text-slate-500">
-                Digital art marketplace — prints &amp; creative pieces
+                Curated gallery wall art — physical prints shipped to you
               </p>
               <h1 className="mx-auto mt-5 max-w-3xl bg-gradient-to-b from-white to-slate-300 bg-clip-text text-2xl font-semibold leading-tight tracking-tight text-transparent sm:text-4xl sm:leading-tight">
-                Shop curated digital art: Japanese, famous masters, new artists,
-                vintage, floral &amp; abstract — all in one place.
+                Browse fine-art reproductions from Japanese classics, masters, new voices,
+                vintage posters, florals &amp; abstract pieces — unified at {`70 × 100 cm`}.
               </h1>
               <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-slate-400/95">
-                Browse licensed-style listings priced in AUD. Checkout as a
+                Prices in AUD — every SKU is described as physical printed work in a single wall-friendly size.
+                Checkout as a
                 guest anytime — or use{" "}
                 <Link
                   href="/login"
@@ -83,7 +84,7 @@ export default function HomePage() {
                   href="#store"
                   className="moa-cta inline-flex items-center justify-center px-10 py-3.5 text-[10px] font-semibold uppercase tracking-[0.28em]"
                 >
-                  Browse digital art
+                  Browse the gallery
                 </Link>
                 <Link
                   href="/login"
@@ -164,7 +165,7 @@ export default function HomePage() {
               </li>
               <li>
                 <Link className="transition hover:text-cyan-300" href="/?cat=vintage-prints">
-                  Vintage Prints
+                  Vintage Wall Art
                 </Link>
               </li>
               <li>
@@ -228,9 +229,9 @@ export default function HomePage() {
           </div>
           <div className="lg:pl-8">
             <p className="text-[13px] leading-relaxed text-[var(--muted-foreground)]">
-              A digital art store with categories from Japanese and famous works
-              to vintage, floral, and abstract. Guest checkout by default;
-              optional login for returning customers.
+              {STORE_BRAND} focuses on tactile wall décor: physical prints spanning Japanese and famous works,
+              vintage, floral, abstract, and curated sets. Flat-rate checkout shipping applies by default inside
+              Australia. Guest checkout; optional login for returning customers.
             </p>
           </div>
         </div>

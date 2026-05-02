@@ -50,24 +50,24 @@ export function AdminLoginForm() {
 
   return (
     <div className="ai-panel mx-auto max-w-md rounded-sm border border-[var(--border)] p-8 shadow-[0_0_40px_rgba(99,102,241,0.08)]">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-violet-400/70">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-zinc-700">
         Staff only
       </p>
-      <h1 className="mt-2 bg-gradient-to-r from-cyan-200 to-violet-300 bg-clip-text text-xl font-semibold tracking-tight text-transparent">
+      <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900">
         Super admin sign in
       </h1>
       <p className="mt-2 text-xs text-[var(--muted-foreground)]">
         Create payment links / orders for customers. Not linked from the public
         storefront. Use{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-cyan-200/80">
+        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-zinc-800">
           SUPER_ADMIN_*
         </code>{" "}
         or{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-cyan-200/80">
+        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-zinc-800">
           ADMIN_*
         </code>{" "}
         credentials +{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-cyan-200/80">
+        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-zinc-800">
           ADMIN_SESSION_SECRET
         </code>{" "}
         (min 16 chars) on your host, then redeploy.
@@ -77,7 +77,7 @@ export function AdminLoginForm() {
         <div>
           <label
             htmlFor="adm-user"
-            className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-500/80"
+            className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-800"
           >
             Username
           </label>
@@ -94,7 +94,7 @@ export function AdminLoginForm() {
         <div>
           <label
             htmlFor="adm-pass"
-            className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-500/80"
+            className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-800"
           >
             Password
           </label>
@@ -110,7 +110,7 @@ export function AdminLoginForm() {
           />
         </div>
         {error ? (
-          <p className="text-sm text-red-400/90" role="alert">
+          <p className="text-sm font-medium text-red-700" role="alert">
             {error}
           </p>
         ) : null}

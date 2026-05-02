@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { appBaseUrl } from "@/lib/checkout-base-url";
 import { pricingStoreCheckout } from "@/lib/pricing-store";
 import { getStripe } from "@/lib/stripe-server";
 
@@ -13,7 +12,8 @@ type Body = {
 
 export async function POST(request: Request) {
   const stripe = getStripe();
-  if (!stripe) {
+  const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
+  if (!stripe || !pk) {
     return NextResponse.json(
       { error: "Checkout is temporarily unavailable. Please try again later." },
       { status: 503 },
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { items, shippingAud, subtotalAud, tipAud, totalAud } =
+    const { shippingAud, subtotalAud, tipAud, totalAud, items } =
       pricingStoreCheckout(body.lines ?? [], body.tipAmountAud ?? 0);
 
     if (totalAud < 0.5) {
@@ -38,60 +38,34 @@ export async function POST(request: Request) {
       );
     }
 
-    const base = appBaseUrl(request.headers);
-
     const email = String(body.customerEmail ?? "").trim();
 
-    const lineItems = items.map((it) => ({
-      quantity: it.quantity,
-      price_data: {
-        currency: "aud" as const,
-        product_data: {
-          name: it.title,
-          ...(it.imageSrc ? { images: [it.imageSrc] } : {}),
-        },
-        unit_amount: Math.round(it.unitAud * 100),
-      },
-    }));
-
-    if (shippingAud >= 0.005) {
-      lineItems.push({
-        quantity: 1,
-        price_data: {
-          currency: "aud" as const,
-          product_data: {
-            name: "Shipping (flat rate, per order)",
-          },
-          unit_amount: Math.round(shippingAud * 100),
-        },
-      });
-    }
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
+    const pi = await stripe.paymentIntents.create({
+      amount: Math.round(totalAud * 100),
       currency: "aud",
-      line_items: lineItems,
-      success_url: `${base}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${base}/checkout`,
-      billing_address_collection: "required",
-      phone_number_collection: { enabled: true },
-      ...(email.includes("@") ? { customer_email: email } : {}),
+      automatic_payment_methods: { enabled: true },
+      receipt_email: email.includes("@") ? email : undefined,
+      description: "Kuka Arthouse — store order",
       metadata: {
         checkout_kind: "store",
         subtotal_aud: subtotalAud.toFixed(2),
         tip_aud: tipAud.toFixed(2),
         shipping_aud: shippingAud.toFixed(2),
+        line_count: String(items.length),
       },
     });
 
-    if (!session.url) {
+    if (!pi.client_secret) {
       return NextResponse.json(
-        { error: "Could not start checkout. Please try again." },
+        { error: "Could not start payment. Please try again." },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({
+      clientSecret: pi.client_secret,
+      publishableKey: pk,
+    });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Checkout error";
     return NextResponse.json({ error: msg }, { status: 400 });

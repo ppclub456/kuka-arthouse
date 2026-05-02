@@ -5,60 +5,43 @@ import { getStripe } from "@/lib/stripe-server";
 
 export const dynamic = "force-dynamic";
 
-async function summarizeSession(
-  stripe: Stripe,
-  session: Stripe.Checkout.Session,
-) {
-  let declineMessage: string | null = null;
-  let declineCode: string | null = null;
+function summarizePI(pi: Stripe.PaymentIntent) {
   let cardBrand: string | null = null;
   let cardLast4: string | null = null;
 
-  const piId =
-    typeof session.payment_intent === "string"
-      ? session.payment_intent
-      : session.payment_intent?.id ?? null;
+  const err = pi.last_payment_error;
+  const declineMessage = err?.message ?? null;
+  const declineCode = err?.decline_code ?? null;
 
-  if (piId) {
-    const pi = await stripe.paymentIntents.retrieve(piId, {
-      expand: ["latest_charge.payment_method_details.card"],
-    });
-    declineMessage = pi.last_payment_error?.message ?? null;
-    declineCode = pi.last_payment_error?.decline_code ?? null;
-
-    const charge = pi.latest_charge;
-    if (typeof charge === "object" && charge) {
-      const card = charge.payment_method_details?.card;
-      cardBrand = card?.brand ?? null;
-      cardLast4 = card?.last4 ?? null;
-    }
+  const charge = pi.latest_charge;
+  if (typeof charge === "object" && charge) {
+    const card = charge.payment_method_details?.card;
+    cardBrand = card?.brand ?? null;
+    cardLast4 = card?.last4 ?? null;
   }
-
-  const amountTotal =
-    typeof session.amount_total === "number"
-      ? (session.amount_total / 100).toFixed(2)
-      : "—";
 
   const humanDecline =
     declineMessage ??
-    (declineCode
-      ? declineCode.replace(/_/g, " ").toLowerCase()
-      : null);
+    (declineCode ? declineCode.replace(/_/g, " ").toLowerCase() : null);
+
+  const paymentStatus =
+    pi.status === "succeeded"
+      ? "paid"
+      : pi.status === "requires_payment_method"
+        ? "unpaid"
+        : pi.status;
 
   return {
-    id: session.id,
-    created: session.created * 1000,
-    currency: (session.currency ?? "").toUpperCase(),
-    paymentStatus: session.payment_status ?? "unknown",
-    /** open / complete / expired */
-    status: session.status ?? "",
-    customerEmail:
-      session.customer_details?.email ?? session.customer_email ?? null,
-    amountTotal,
-    checkoutKind: session.metadata?.checkout_kind ?? "unknown",
+    id: pi.id,
+    created: pi.created * 1000,
+    currency: (pi.currency ?? "").toUpperCase(),
+    paymentStatus,
+    status: pi.status,
+    customerEmail: pi.receipt_email ?? null,
+    amountTotal: (pi.amount / 100).toFixed(2),
+    checkoutKind: pi.metadata?.checkout_kind ?? "unknown",
     declineMessage: humanDecline,
     declineCode,
-    /** Brand + last4 only — Stripe never exposes full PAN to merchants */
     cardBrand,
     cardLast4,
   };
@@ -76,11 +59,12 @@ export async function GET() {
     });
   }
 
-  const list = await stripe.checkout.sessions.list({ limit: 35 });
-  const rows = await Promise.all(
-    list.data.map((s) => summarizeSession(stripe, s)),
-  );
+  const list = await stripe.paymentIntents.list({
+    limit: 40,
+    expand: ["data.latest_charge.payment_method_details.card"],
+  });
 
+  const rows = list.data.map((pi) => summarizePI(pi));
   rows.sort((a, b) => b.created - a.created);
 
   return NextResponse.json({ rows });

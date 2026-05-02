@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-/** Legacy URLs no longer mint customer sessions (amount lived in query). */
+/** Legacy URLs — customer payment now uses `/pay` with a signed token. */
 export default function LegacyAdminPayPage() {
   return (
     <div className="mx-auto flex max-w-md flex-1 flex-col justify-center px-4 py-20 text-center sm:px-6">
@@ -8,12 +8,13 @@ export default function LegacyAdminPayPage() {
         Link format retired
       </p>
       <h1 className="mt-4 text-lg font-semibold text-[var(--foreground)]">
-        Payments now use Stripe Checkout
+        On-site payment links only
       </h1>
       <p className="mt-4 text-sm leading-relaxed text-[var(--muted-foreground)]">
-        Ask your merchant to sign in at <span className="font-mono">/admin/login</span>{" "}
-        and generate a new Stripe payment link from the dashboard. Older{" "}
-        <span className="font-mono">/admin/pay/…</span> links are inactive.
+        Please sign in at <span className="font-mono">/admin/login</span>, then generate an on-site
+        payment URL from the admin dashboard — customers complete payment at{" "}
+        <span className="font-mono">/pay</span>. Older paths like{" "}
+        <span className="font-mono">/admin/pay/…</span> are disabled.
       </p>
       <Link
         href="/"

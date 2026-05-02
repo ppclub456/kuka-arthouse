@@ -3,13 +3,19 @@
 import { useEffect } from "react";
 import { useCart } from "@/context/cart-context";
 
-/** After returning from Stripe success_url, strip cart from browser. */
-export function StripeSuccessClearCart({ sessionId }: { sessionId?: string }) {
+/** Clear cart after embedded card flow or legacy hosted return. */
+export function StripeSuccessClearCart({
+  sessionId,
+  paymentIntentId,
+}: {
+  sessionId?: string;
+  paymentIntentId?: string;
+}) {
   const { clearCart } = useCart();
 
   useEffect(() => {
-    if (sessionId) clearCart();
-  }, [sessionId, clearCart]);
+    if (sessionId || paymentIntentId) clearCart();
+  }, [sessionId, paymentIntentId, clearCart]);
 
   return null;
 }

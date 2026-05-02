@@ -16,8 +16,7 @@ export function AdminPaymentLinkTool() {
   const [customAmount, setCustomAmount] = useState("");
   const [usePriceOverride, setUsePriceOverride] = useState(false);
   const [quantity, setQuantity] = useState("1");
-  const [stripeUrl, setStripeUrl] = useState("");
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [payPageUrl, setPayPageUrl] = useState("");
   const [genError, setGenError] = useState("");
   const [genPending, setGenPending] = useState(false);
 
@@ -65,12 +64,11 @@ export function AdminPaymentLinkTool() {
   async function handleGenerate() {
     setGenError("");
     setGenPending(true);
-    setStripeUrl("");
-    setSessionId(null);
+    setPayPageUrl("");
 
     try {
       const invoiceTotalAud = Number.parseFloat(invoiceTotal.trim() || "0");
-      const res = await fetch("/api/stripe/admin-checkout", {
+      const res = await fetch("/api/stripe/issue-payment-link-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -90,21 +88,19 @@ export function AdminPaymentLinkTool() {
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
         url?: string;
-        sessionId?: string;
       };
 
       if (!res.ok) {
-        setGenError(data.error ?? "Could not create Stripe Checkout.");
+        setGenError(data.error ?? "Could not issue payment link.");
         return;
       }
 
       if (!data.url) {
-        setGenError("Stripe did not return a URL.");
+        setGenError("Server did not return a URL.");
         return;
       }
 
-      setStripeUrl(data.url);
-      setSessionId(data.sessionId ?? null);
+      setPayPageUrl(data.url);
     } catch {
       setGenError("Network error — try again.");
     } finally {
@@ -117,20 +113,25 @@ export function AdminPaymentLinkTool() {
 
   return (
     <div className="ai-panel rounded-sm p-6 sm:p-8">
-      <h2 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-cyan-400/80">
+      <h2 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-800">
         Payment link · orders
       </h2>
       <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-        Creates a Stripe Checkout link (hosted payment page). Only you can generate
-        it while logged in; the customer receives a normal card payment screen. Requires{" "}
+        Creates an on-site payment link: the customer completes card payment in our embedded form on{" "}
+        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">/pay</code>.
+        Restricted to signed-in admins. Server needs{" "}
         <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
           STRIPE_SECRET_KEY
         </code>{" "}
-        on the server.
+        and{" "}
+        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        </code>
+        .
       </p>
 
       <fieldset className="mt-8 space-y-3">
-        <legend className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+        <legend className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
           Source
         </legend>
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -173,7 +174,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="inv-title"
-                className="text-[11px] uppercase tracking-wider text-slate-400"
+                className="text-[11px] uppercase tracking-wider text-zinc-600"
               >
                 Customer-facing title / memo
               </label>
@@ -188,7 +189,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="inv-total"
-                className="text-[11px] uppercase tracking-wider text-slate-400"
+                className="text-[11px] uppercase tracking-wider text-zinc-600"
               >
                 Total due (AUD) — one payment
               </label>
@@ -200,8 +201,8 @@ export function AdminPaymentLinkTool() {
                 className={input}
                 placeholder="0.00"
               />
-              <p className="mt-1.5 text-[11px] text-slate-500">
-                Quantity is fixed to 1. Customer pays exactly this Stripe line item total.
+              <p className="mt-1.5 text-[11px] text-zinc-600">
+                Quantity is 1 for this invoice. The customer pays the total on-site.
               </p>
             </div>
           </>
@@ -210,7 +211,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="product-pick"
-                className="text-[11px] uppercase tracking-wider text-slate-400"
+                className="text-[11px] uppercase tracking-wider text-zinc-600"
               >
                 Product
               </label>
@@ -240,7 +241,7 @@ export function AdminPaymentLinkTool() {
               <div>
                 <label
                   htmlFor="price-ov"
-                  className="text-[11px] uppercase tracking-wider text-slate-400"
+                  className="text-[11px] uppercase tracking-wider text-zinc-600"
                 >
                   Custom unit price (AUD)
                 </label>
@@ -257,7 +258,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="qty-pay"
-                className="text-[11px] uppercase tracking-wider text-slate-400"
+                className="text-[11px] uppercase tracking-wider text-zinc-600"
               >
                 Quantity
               </label>
@@ -276,7 +277,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="custom-title"
-                className="text-[11px] uppercase tracking-wider text-slate-400"
+                className="text-[11px] uppercase tracking-wider text-zinc-600"
               >
                 Description / title
               </label>
@@ -291,7 +292,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="custom-amt"
-                className="text-[11px] uppercase tracking-wider text-slate-400"
+                className="text-[11px] uppercase tracking-wider text-zinc-600"
               >
                 Unit price (AUD)
               </label>
@@ -307,7 +308,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="qty-pay2"
-                className="text-[11px] uppercase tracking-wider text-slate-400"
+                className="text-[11px] uppercase tracking-wider text-zinc-600"
               >
                 Quantity
               </label>
@@ -329,11 +330,11 @@ export function AdminPaymentLinkTool() {
             {displayTitle}
           </span>{" "}
           · {effectiveQty} × {resolvedUnitAud.toFixed(2)} AUD ={" "}
-          <span className="text-cyan-300/90">{lineTotal.toFixed(2)} AUD</span>
+          <span className="font-semibold text-sky-800">{lineTotal.toFixed(2)} AUD</span>
         </p>
 
         {genError ? (
-          <p className="text-sm text-red-400/90" role="alert">
+          <p className="text-sm font-medium text-red-700" role="alert">
             {genError}
           </p>
         ) : null}
@@ -344,34 +345,29 @@ export function AdminPaymentLinkTool() {
           onClick={() => void handleGenerate()}
           className="moa-cta w-full py-3 text-[11px] font-semibold uppercase tracking-[0.2em] disabled:opacity-60 sm:w-auto sm:px-8"
         >
-          {genPending ? "Connecting to Stripe…" : "Generate Stripe payment link"}
+          {genPending ? "Generating link…" : "Generate on-site payment link"}
         </button>
       </div>
 
-      {stripeUrl ? (
+      {payPageUrl ? (
         <div className="mt-10">
           <label
             htmlFor="link-out"
-            className="text-[11px] uppercase tracking-wider text-slate-400"
+            className="text-[11px] uppercase tracking-wider text-zinc-600"
           >
-            Stripe Checkout URL (send to customer)
+            On-site payment URL (share with customer)
           </label>
           <textarea
             id="link-out"
             readOnly
             rows={4}
-            value={stripeUrl}
-            className="mt-2 w-full resize-y border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 font-mono text-[11px] leading-relaxed text-cyan-100/90"
+            value={payPageUrl}
+            className="mt-2 w-full resize-y border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-900"
           />
-          {sessionId ? (
-            <p className="mt-2 text-[10px] text-slate-500">
-              Session id: <span className="font-mono text-slate-400">{sessionId}</span>
-            </p>
-          ) : null}
           <button
             type="button"
-            onClick={() => void navigator.clipboard.writeText(stripeUrl)}
-            className="mt-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-400 underline-offset-4 hover:text-cyan-300 hover:underline"
+            onClick={() => void navigator.clipboard.writeText(payPageUrl)}
+            className="mt-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-800 underline-offset-4 hover:text-sky-950 hover:underline"
           >
             Copy to clipboard
           </button>

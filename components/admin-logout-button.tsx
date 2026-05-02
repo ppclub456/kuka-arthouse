@@ -23,7 +23,7 @@ export function AdminLogoutButton() {
       type="button"
       onClick={() => void logout()}
       disabled={pending}
-      className="rounded-sm border border-[var(--border)] bg-[var(--surface-elevated)] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)] transition hover:border-cyan-400/40 hover:text-cyan-300 disabled:opacity-50"
+      className="rounded-sm border border-[var(--border)] bg-[var(--surface-elevated)] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-800 transition hover:border-sky-500/50 hover:text-sky-900 disabled:opacity-50"
     >
       {pending ? "…" : "Log out"}
     </button>

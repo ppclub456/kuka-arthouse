@@ -4,8 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useCart } from "@/context/cart-context";
+import { EmbeddedStripePayment } from "@/components/embedded-stripe-payment";
+import { countryLabelToIso } from "@/lib/country-iso";
 import { formatMoaPrice } from "@/lib/format";
 import { STORE_FLAT_SHIPPING_AUD } from "@/lib/pricing-store";
+import { STORE_SUPPORT_EMAIL } from "@/lib/store-contact";
 
 const COUNTRIES = [
   "Australia",
@@ -55,14 +58,43 @@ export function CheckoutForm() {
   const shippingAmount = STORE_FLAT_SHIPPING_AUD;
   const orderTotal = subtotalWithTip + shippingAmount;
 
+  const billingPrefill = useMemo(
+    () => ({
+      email: email.trim(),
+      name: `${firstName} ${lastName}`.trim(),
+      phone: phone.trim() || undefined,
+      address: {
+        line1: street,
+        city,
+        postal_code: postal,
+        country: countryLabelToIso(country),
+      },
+    }),
+    [
+      email,
+      firstName,
+      lastName,
+      phone,
+      street,
+      city,
+      postal,
+      country,
+    ],
+  );
+
   const [payError, setPayError] = useState("");
   const [payPending, setPayPending] = useState(false);
+  const [embedPayment, setEmbedPayment] = useState<{
+    clientSecret: string;
+    publishableKey: string;
+  } | null>(null);
 
   async function handleProceedToPayment() {
     setPayError("");
+    setEmbedPayment(null);
     setPayPending(true);
     try {
-      const res = await fetch("/api/stripe/store-checkout", {
+      const res = await fetch("/api/stripe/create-payment-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -76,17 +108,21 @@ export function CheckoutForm() {
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
-        url?: string;
+        clientSecret?: string;
+        publishableKey?: string;
       };
       if (!res.ok) {
-        setPayError(data.error ?? "Could not start checkout. Try again shortly.");
+        setPayError(data.error ?? "Could not prepare payment. Try again shortly.");
         return;
       }
-      if (data.url) {
-        window.location.href = data.url;
+      if (data.clientSecret && data.publishableKey) {
+        setEmbedPayment({
+          clientSecret: data.clientSecret,
+          publishableKey: data.publishableKey,
+        });
         return;
       }
-      setPayError("Could not open the payment page. Please try again.");
+      setPayError("Could not start payment. Please try again.");
     } catch {
       setPayError("Network error. Please try again.");
     } finally {
@@ -349,8 +385,9 @@ export function CheckoutForm() {
               Payment
             </h2>
             <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-              You&apos;ll complete payment on our secure checkout page. Your order summary includes
-              a flat shipping fee for this order ({formatMoaPrice(STORE_FLAT_SHIPPING_AUD)}).
+              Complete your card payment on this page. The summary shows Australian flat
+              shipping ({formatMoaPrice(STORE_FLAT_SHIPPING_AUD)}); read the note under the total if your
+              address is outside Australia.
             </p>
           </section>
 
@@ -360,19 +397,43 @@ export function CheckoutForm() {
             </p>
           ) : null}
 
-          <button
-            type="button"
-            disabled={payPending}
-            onClick={() => void handleProceedToPayment()}
-            className="moa-cta w-full py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] shadow-md shadow-[var(--accent)]/20 disabled:opacity-60"
-          >
-            {payPending ? "Opening secure checkout…" : "Proceed to payment"}
-          </button>
-          <p className="text-center text-xs leading-relaxed text-[var(--muted-foreground)]">
-            <span className="font-medium text-[var(--foreground)]">Secure payment:</span>{" "}
-            Card details are entered on our payment provider&apos;s encrypted page — we never see your
-            full card number.
-          </p>
+          {!embedPayment ? (
+            <>
+              <button
+                type="button"
+                disabled={payPending}
+                onClick={() => void handleProceedToPayment()}
+                className="moa-cta w-full py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] shadow-md shadow-[var(--accent)]/20 disabled:opacity-60"
+              >
+                {payPending ? "Preparing payment…" : "Proceed to payment"}
+              </button>
+              <p className="text-center text-xs leading-relaxed text-[var(--muted-foreground)]">
+                <span className="font-medium text-[var(--foreground)]">Secure payment:</span>{" "}
+                Card fields are encrypted — we never see your full card number.
+              </p>
+            </>
+          ) : (
+            <div className="space-y-4 rounded-sm border border-cyan-500/20 bg-[var(--surface-elevated)]/40 p-6">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-500/70">
+                  Card payment
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setEmbedPayment(null)}
+                  className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 underline-offset-4 hover:text-cyan-400 hover:underline"
+                >
+                  Edit details above
+                </button>
+              </div>
+              <EmbeddedStripePayment
+                publishableKey={embedPayment.publishableKey}
+                clientSecret={embedPayment.clientSecret}
+                amountLabel={formatMoaPrice(orderTotal)}
+                defaultBillingDetails={billingPrefill}
+              />
+            </div>
+          )}
         </form>
       </div>
 
@@ -429,6 +490,16 @@ export function CheckoutForm() {
                 {formatMoaPrice(shippingAmount)}
               </span>
             </div>
+            <p className="text-[10px] leading-snug text-slate-500">
+              Flat-rate shipping at checkout applies to delivery within Australia. If you are outside Australia, contact{" "}
+              <a
+                href={`mailto:${STORE_SUPPORT_EMAIL}`}
+                className="text-cyan-500/85 underline-offset-2 hover:underline"
+              >
+                {STORE_SUPPORT_EMAIL}
+              </a>{" "}
+              for a freight quote before we ship.
+            </p>
             <div className="flex justify-between border-t border-[var(--border)] pt-3 text-base font-semibold">
               <span className="text-[var(--foreground)]">Total</span>
               <span className="bg-gradient-to-r from-cyan-300 to-violet-300 bg-clip-text text-transparent">

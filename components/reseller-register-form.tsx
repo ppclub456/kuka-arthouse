@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { STORE_SUPPORT_EMAIL } from "@/lib/store-contact";
 
 const inputCls =
   "mt-2 w-full border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-cyan-400/50";
@@ -39,10 +40,10 @@ export function ResellerRegisterForm() {
         <p className="mt-3 text-sm leading-relaxed text-[var(--muted-foreground)]">
           We have your reseller application on file. Please also email{" "}
           <a
-            href="mailto:support@example.com"
+            href={`mailto:${STORE_SUPPORT_EMAIL}`}
             className="text-cyan-400 underline-offset-4 hover:text-cyan-300 hover:underline"
           >
-            support@example.com
+            {STORE_SUPPORT_EMAIL}
           </a>{" "}
           if you need an immediate reply.
         </p>

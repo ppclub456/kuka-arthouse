@@ -112,6 +112,52 @@ body {
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
 }
 
+/* --- Admin dashboard: readable light UI (scoped; storefront stays dark) --- */
+.admin-app-scope {
+  color-scheme: light;
+  background-color: #e4e4e7;
+  color: var(--foreground);
+  /* Local tokens — override dark palette only inside this subtree */
+  --background: #e4e4e7;
+  --background-elevated: #fafafa;
+  --foreground: #0a0a0a;
+  --muted-foreground: #52525b;
+  --border: rgba(15, 23, 42, 0.14);
+  --border-dim: rgba(15, 23, 42, 0.1);
+  --card: #f4f4f5;
+  --card-solid: #fafafa;
+  --surface-elevated: #e4e4e7;
+  --input-bg: #ffffff;
+  --accent-soft: rgba(14, 165, 233, 0.12);
+}
+
+.admin-app-scope .ai-panel {
+  background: linear-gradient(to bottom, #fafafa 0%, #f4f4f5 100%);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+  backdrop-filter: none;
+}
+
+.admin-app-scope .moa-cta-outline {
+  background: #ffffff;
+  border-color: rgba(14, 165, 233, 0.5);
+  color: #0284c7;
+}
+
+.admin-app-scope .moa-cta-outline:hover {
+  background: rgba(224, 242, 254, 0.9);
+  border-color: rgba(2, 132, 199, 0.7);
+}
+
+/* Inline <code> in admin hints — avoid pale-on-pale cyan */
+.admin-app-scope code.rounded {
+  background-color: #e4e4e7 !important;
+  color: #171717 !important;
+  border: 1px solid var(--border-dim);
+}
+
 .ai-hero-mask {
   background: linear-gradient(
     180deg,

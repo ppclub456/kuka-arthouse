@@ -8,10 +8,10 @@ export default function AdminPage() {
     <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-16 sm:px-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-violet-400/70">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-zinc-700">
             Kuka Arthouse · Super admin
           </p>
-          <h1 className="mt-2 bg-gradient-to-r from-cyan-200 to-violet-300 bg-clip-text text-xl font-semibold tracking-tight text-transparent">
+          <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900">
             Orders &amp; payment links
           </h1>
           <p className="mt-2 max-w-md text-xs text-[var(--muted-foreground)]">
@@ -31,7 +31,7 @@ export default function AdminPage() {
       <p className="mt-10 text-center">
         <Link
           href="/"
-          className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 transition hover:text-cyan-400"
+          className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-600 transition hover:text-sky-800"
         >
           ← Storefront
         </Link>

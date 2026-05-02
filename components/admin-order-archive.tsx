@@ -80,28 +80,15 @@ export function AdminOrderArchive() {
     <div className="ai-panel mt-12 rounded-sm p-6 sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-800">
-            Paid orders · database
+          <h2 className="text-base font-semibold uppercase tracking-[0.2em] text-zinc-900 sm:text-lg">
+            Archived orders
           </h2>
-          <p className="mt-2 max-w-2xl text-xs text-[var(--muted-foreground)]">
-            Every successful Stripe payment webhook writes one row here (payment link orders
-            included). Duplicate webhooks are ignored. If this list stays empty after a test payment,
-            check{" "}
-            <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
-              DATABASE_URL
-            </code>{" "}
-            and the Stripe webhook forwarding to{" "}
-            <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
-              /api/stripe/webhook
-            </code>
-            .
-          </p>
         </div>
         <button
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="rounded-sm border border-[var(--border)] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-800 transition hover:border-sky-500/45 hover:bg-white disabled:opacity-50"
+          className="rounded-sm border border-[var(--border)] px-5 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-900 transition hover:border-sky-500/45 hover:bg-white disabled:opacity-50"
         >
           Refresh
         </button>
@@ -119,17 +106,16 @@ export function AdminOrderArchive() {
       ) : null}
 
       {loading ? (
-        <p className="mt-6 text-sm text-[var(--muted-foreground)]">Loading…</p>
+        <p className="mt-6 text-base text-[var(--muted-foreground)]">Loading…</p>
       ) : rows.length === 0 ? (
-        <p className="mt-6 text-sm text-[var(--muted-foreground)]">
-          No paid orders archived yet — after a successful card payment Stripe will POST the
-          webhook and this table will fill (when the DB is configured).
+        <p className="mt-6 text-base text-[var(--muted-foreground)]">
+          No archived orders yet.
         </p>
       ) : (
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-left text-[12px]">
+          <table className="w-full min-w-[760px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-[var(--border-dim)] text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-600">
+              <tr className="border-b border-[var(--border-dim)] text-xs font-semibold uppercase tracking-[0.1em] text-zinc-600">
                 <th className="py-3 pr-3">When</th>
                 <th className="py-3 pr-3">Channel</th>
                 <th className="py-3 pr-3">Reference</th>
@@ -152,12 +138,12 @@ export function AdminOrderArchive() {
                   <td className="py-3 pr-3 align-top">
                     {channelLabel(r.checkoutKind)}
                     {r.adminMode ? (
-                      <span className="mt-0.5 block text-[10px] text-zinc-500">
+                      <span className="mt-0.5 block text-xs text-zinc-500">
                         Mode: {r.adminMode}
                       </span>
                     ) : null}
                   </td>
-                  <td className="py-3 pr-3 align-top font-mono text-[11px] text-zinc-700">
+                  <td className="py-3 pr-3 align-top font-mono text-sm text-zinc-700">
                     {r.reference ?? "—"}
                   </td>
                   <td className="py-3 pr-3 align-top text-[var(--muted-foreground)]">
@@ -169,7 +155,7 @@ export function AdminOrderArchive() {
                   <td className="py-3 pr-3 align-top tabular-nums font-medium">
                     {(r.currency ?? "AUD").toUpperCase()} {r.amountAud}
                   </td>
-                  <td className="py-3 pr-3 align-top font-mono text-[10px] text-zinc-600">
+                  <td className="py-3 pr-3 align-top font-mono text-xs text-zinc-600">
                     {r.stripePaymentIntentId}
                   </td>
                   <td className="py-3 align-top">

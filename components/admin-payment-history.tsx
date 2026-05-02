@@ -75,19 +75,15 @@ export function AdminPaymentHistory() {
     <div className="ai-panel mt-12 rounded-sm p-6 sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-800">
-              Recent PaymentIntents
+          <h2 className="text-base font-semibold uppercase tracking-[0.2em] text-zinc-900 sm:text-lg">
+            Recent payments (Stripe)
           </h2>
-          <p className="mt-2 max-w-xl text-xs text-[var(--muted-foreground)]">
-            Pulled from your Stripe account (latest 35). Card numbers are not shown — only brand and
-            last four when available. Failure messages come from Stripe when a payment fails.
-          </p>
         </div>
         <button
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="rounded-sm border border-[var(--border)] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-800 transition hover:border-sky-500/45 hover:bg-white disabled:opacity-50"
+          className="rounded-sm border border-[var(--border)] px-5 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-900 transition hover:border-sky-500/45 hover:bg-white disabled:opacity-50"
         >
           Refresh
         </button>
@@ -105,16 +101,16 @@ export function AdminPaymentHistory() {
       ) : null}
 
       {loading ? (
-        <p className="mt-6 text-sm text-[var(--muted-foreground)]">Loading…</p>
+        <p className="mt-6 text-base text-[var(--muted-foreground)]">Loading…</p>
       ) : rows.length === 0 ? (
-        <p className="mt-6 text-sm text-[var(--muted-foreground)]">
-          No payments recorded yet — items appear after customers submit a payment intent.
+        <p className="mt-6 text-base text-[var(--muted-foreground)]">
+          No Stripe payments loaded yet.
         </p>
       ) : (
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-left text-[12px]">
+          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-[var(--border-dim)] text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-600">
+              <tr className="border-b border-[var(--border-dim)] text-xs font-semibold uppercase tracking-[0.1em] text-zinc-600">
                 <th className="py-3 pr-3">When</th>
                 <th className="py-3 pr-3">Kind</th>
                 <th className="py-3 pr-3">Email</th>
@@ -154,7 +150,7 @@ export function AdminPaymentHistory() {
                       {r.paymentStatus}
                     </span>
                   </td>
-                  <td className="py-3 pr-3 align-top font-mono text-[10px] text-zinc-700">
+                  <td className="py-3 pr-3 align-top font-mono text-xs text-zinc-700">
                     {r.status}
                     <span className="mt-1 block font-normal text-zinc-600">{r.id}</span>
                   </td>

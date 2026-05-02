@@ -79,20 +79,15 @@ export function AdminPayLinksTable() {
     <div className="ai-panel mt-12 rounded-sm p-6 sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-800">
-            Payment links · tracking
+          <h2 className="text-base font-semibold uppercase tracking-[0.2em] text-zinc-900 sm:text-lg">
+            Payment links
           </h2>
-          <p className="mt-2 max-w-2xl text-xs text-[var(--muted-foreground)]">
-            Each issued 6-letter code: <strong>Open</strong> until paid/expired,&nbsp;
-            <strong>Views</strong> increment when someone loads the payment page.&nbsp;
-            <strong>Paid</strong> is set via Stripe webhook on successful payment intent.
-          </p>
         </div>
         <button
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="rounded-sm border border-[var(--border)] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-800 transition hover:border-sky-500/45 hover:bg-white disabled:opacity-50"
+          className="rounded-sm border border-[var(--border)] px-5 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-zinc-900 transition hover:border-sky-500/45 hover:bg-white disabled:opacity-50"
         >
           Refresh
         </button>
@@ -110,16 +105,16 @@ export function AdminPayLinksTable() {
       ) : null}
 
       {loading ? (
-        <p className="mt-6 text-sm text-[var(--muted-foreground)]">Loading…</p>
+        <p className="mt-6 text-base text-[var(--muted-foreground)]">Loading…</p>
       ) : rows.length === 0 ? (
-        <p className="mt-6 text-sm text-[var(--muted-foreground)]">
-          No payment links issued yet. Generate one above.
+        <p className="mt-6 text-base text-[var(--muted-foreground)]">
+          No payment links yet.
         </p>
       ) : (
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[960px] border-collapse text-left text-[12px]">
+          <table className="w-full min-w-[960px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-[var(--border-dim)] text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-600">
+              <tr className="border-b border-[var(--border-dim)] text-xs font-semibold uppercase tracking-[0.1em] text-zinc-600">
                 <th className="py-3 pr-3">Code</th>
                 <th className="py-3 pr-3">Status</th>
                 <th className="py-3 pr-3">Views</th>
@@ -139,7 +134,7 @@ export function AdminPayLinksTable() {
                       key={`${r.code}-${r.createdAt}`}
                       className="border-b border-[var(--border-dim)]/60"
                     >
-                      <td className="py-3 pr-3 align-top font-mono text-[13px] font-semibold text-zinc-900">
+                      <td className="py-3 pr-3 align-top font-mono text-sm font-semibold text-zinc-900">
                         {r.code}
                       </td>
                       <td className={`py-3 pr-3 align-top ${badge.cls}`}>
@@ -157,13 +152,13 @@ export function AdminPayLinksTable() {
                       <td className="py-3 pr-3 align-top tabular-nums font-medium">
                         {r.amountAud}
                       </td>
-                      <td className="py-3 pr-3 align-top font-mono text-[11px] text-zinc-700">
+                      <td className="py-3 pr-3 align-top font-mono text-sm text-zinc-700">
                         {r.reference ?? "—"}
                       </td>
                       <td className="max-w-[220px] py-3 pr-3 align-top text-[var(--muted-foreground)]">
                         <span className="line-clamp-2">{r.title}</span>
                       </td>
-                      <td className="py-3 align-top font-mono text-[10px] text-zinc-500">
+                      <td className="py-3 align-top font-mono text-xs text-zinc-500">
                         {r.stripePaymentIntentId ?? "—"}
                       </td>
                     </tr>

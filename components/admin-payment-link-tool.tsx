@@ -115,44 +115,18 @@ export function AdminPaymentLinkTool() {
   }
 
   const input =
-    "mt-2 w-full border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-cyan-400/50 focus:outline-none";
+    "mt-2 w-full border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2.5 text-base text-[var(--foreground)] focus:border-cyan-400/50 focus:outline-none";
 
   return (
     <div className="ai-panel rounded-sm p-6 sm:p-8">
-      <h2 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-800">
-        Payment link · orders
+      <h2 className="text-base font-semibold uppercase tracking-[0.2em] text-zinc-900 sm:text-lg">
+        Payment link
       </h2>
-      <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-        Creates an on-site payment link: the customer completes card payment in our embedded form on{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">/pay</code>.
-        Restricted to signed-in admins. Server needs{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
-          STRIPE_SECRET_KEY
-        </code>{" "}
-        and{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-        </code>
-        {" "}(same project as Stripe secret — required for embedded card fields on{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
-          /pay
-        </code>
-        ).
-        Links are 6-character codes in{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
-          ?p=
-        </code>
-        , stored in Postgres — set{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
-          DATABASE_URL
-        </code>{" "}
-        and push the schema (<code className="font-mono text-[10px]">drizzle/0001_pay_links.sql</code>).
-      </p>
 
       <div className="mt-6">
         <label
           htmlFor="pay-ref"
-          className="text-[11px] uppercase tracking-wider text-zinc-600"
+          className="text-sm font-medium uppercase tracking-wide text-zinc-700"
         >
           Order / payment reference (optional · shown on pay page)
         </label>
@@ -167,11 +141,11 @@ export function AdminPaymentLinkTool() {
       </div>
 
       <fieldset className="mt-8 space-y-3">
-        <legend className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
+        <legend className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-700">
           Source
         </legend>
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--foreground)]">
+          <label className="flex cursor-pointer items-center gap-2 text-base text-[var(--foreground)]">
             <input
               type="radio"
               name="pay-mode"
@@ -181,7 +155,7 @@ export function AdminPaymentLinkTool() {
             />
             Invoice total (any amount)
           </label>
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--foreground)]">
+          <label className="flex cursor-pointer items-center gap-2 text-base text-[var(--foreground)]">
             <input
               type="radio"
               name="pay-mode"
@@ -191,7 +165,7 @@ export function AdminPaymentLinkTool() {
             />
             Catalog product
           </label>
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--foreground)]">
+          <label className="flex cursor-pointer items-center gap-2 text-base text-[var(--foreground)]">
             <input
               type="radio"
               name="pay-mode"
@@ -210,7 +184,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="inv-title"
-                className="text-[11px] uppercase tracking-wider text-zinc-600"
+                className="text-sm font-medium uppercase tracking-wide text-zinc-700"
               >
                 Customer-facing title / memo
               </label>
@@ -225,7 +199,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="inv-total"
-                className="text-[11px] uppercase tracking-wider text-zinc-600"
+                className="text-sm font-medium uppercase tracking-wide text-zinc-700"
               >
                 Total due (AUD) — one payment
               </label>
@@ -237,7 +211,7 @@ export function AdminPaymentLinkTool() {
                 className={input}
                 placeholder="0.00"
               />
-              <p className="mt-1.5 text-[11px] text-zinc-600">
+              <p className="mt-1.5 text-sm text-zinc-600">
                 Quantity is 1 for this invoice. The customer pays the total on-site.
               </p>
             </div>
@@ -247,7 +221,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="product-pick"
-                className="text-[11px] uppercase tracking-wider text-zinc-600"
+                className="text-sm font-medium uppercase tracking-wide text-zinc-700"
               >
                 Product
               </label>
@@ -255,7 +229,7 @@ export function AdminPaymentLinkTool() {
                 id="product-pick"
                 value={productId}
                 onChange={(e) => setProductId(e.target.value)}
-                className="mt-2 w-full border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm text-[var(--foreground)]"
+                className="mt-2 w-full border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2.5 text-base text-[var(--foreground)]"
               >
                 {PRODUCTS.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -264,7 +238,7 @@ export function AdminPaymentLinkTool() {
                 ))}
               </select>
             </div>
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--muted-foreground)]">
+            <label className="flex cursor-pointer items-center gap-2 text-base text-[var(--muted-foreground)]">
               <input
                 type="checkbox"
                 checked={usePriceOverride}
@@ -277,7 +251,7 @@ export function AdminPaymentLinkTool() {
               <div>
                 <label
                   htmlFor="price-ov"
-                  className="text-[11px] uppercase tracking-wider text-zinc-600"
+                  className="text-sm font-medium uppercase tracking-wide text-zinc-700"
                 >
                   Custom unit price (AUD)
                 </label>
@@ -294,7 +268,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="qty-pay"
-                className="text-[11px] uppercase tracking-wider text-zinc-600"
+                className="text-sm font-medium uppercase tracking-wide text-zinc-700"
               >
                 Quantity
               </label>
@@ -313,7 +287,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="custom-title"
-                className="text-[11px] uppercase tracking-wider text-zinc-600"
+                className="text-sm font-medium uppercase tracking-wide text-zinc-700"
               >
                 Description / title
               </label>
@@ -328,7 +302,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="custom-amt"
-                className="text-[11px] uppercase tracking-wider text-zinc-600"
+                className="text-sm font-medium uppercase tracking-wide text-zinc-700"
               >
                 Unit price (AUD)
               </label>
@@ -344,7 +318,7 @@ export function AdminPaymentLinkTool() {
             <div>
               <label
                 htmlFor="qty-pay2"
-                className="text-[11px] uppercase tracking-wider text-zinc-600"
+                className="text-sm font-medium uppercase tracking-wide text-zinc-700"
               >
                 Quantity
               </label>
@@ -360,7 +334,7 @@ export function AdminPaymentLinkTool() {
           </>
         )}
 
-        <p className="text-[12px] text-[var(--muted-foreground)]">
+        <p className="text-base text-[var(--muted-foreground)]">
           Preview:{" "}
           <span className="font-medium text-[var(--foreground)]">
             {displayTitle}
@@ -379,7 +353,7 @@ export function AdminPaymentLinkTool() {
           type="button"
           disabled={genPending}
           onClick={() => void handleGenerate()}
-          className="moa-cta w-full py-3 text-[11px] font-semibold uppercase tracking-[0.2em] disabled:opacity-60 sm:w-auto sm:px-8"
+          className="moa-cta w-full py-3.5 text-sm font-semibold uppercase tracking-[0.18em] disabled:opacity-60 sm:w-auto sm:px-8"
         >
           {genPending ? "Generating link…" : "Generate on-site payment link"}
         </button>
@@ -389,7 +363,7 @@ export function AdminPaymentLinkTool() {
         <div className="mt-10">
           <label
             htmlFor="link-out"
-            className="text-[11px] uppercase tracking-wider text-zinc-600"
+            className="text-sm font-medium uppercase tracking-wide text-zinc-700"
           >
             On-site payment URL (share with customer)
           </label>
@@ -398,10 +372,10 @@ export function AdminPaymentLinkTool() {
             readOnly
             rows={2}
             value={payPageUrl}
-            className="mt-2 w-full resize-y border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-900"
+            className="mt-2 w-full resize-y border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2.5 font-mono text-sm leading-relaxed text-zinc-900"
           />
           {issuedShortCode ? (
-            <p className="mt-2 text-[11px] text-zinc-600">
+            <p className="mt-2 text-sm text-zinc-600">
               Customer code only:{" "}
               <span className="font-mono font-semibold tracking-wider text-zinc-900">
                 {issuedShortCode}
@@ -411,7 +385,7 @@ export function AdminPaymentLinkTool() {
           <button
             type="button"
             onClick={() => void navigator.clipboard.writeText(payPageUrl)}
-            className="mt-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-800 underline-offset-4 hover:text-sky-950 hover:underline"
+            className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-sky-800 underline-offset-4 hover:text-sky-950 hover:underline"
           >
             Copy to clipboard
           </button>

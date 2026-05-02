@@ -46,38 +46,22 @@ export function AdminLoginForm() {
   }
 
   const input =
-    "mt-2 w-full border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2.5 text-sm text-[var(--foreground)] focus:border-cyan-400/50 focus:outline-none";
+    "mt-2 w-full border border-[var(--border)] bg-[var(--input-bg)] px-3 py-3 text-base text-[var(--foreground)] focus:border-cyan-400/50 focus:outline-none";
 
   return (
     <div className="ai-panel mx-auto max-w-md rounded-sm border border-[var(--border)] p-8 shadow-[0_0_40px_rgba(99,102,241,0.08)]">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-zinc-700">
+      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-zinc-700 sm:text-sm">
         Staff only
       </p>
-      <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900">
-        Super admin sign in
+      <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+        Admin sign in
       </h1>
-      <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-        Create payment links / orders for customers. Not linked from the public
-        storefront. Use{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-zinc-800">
-          SUPER_ADMIN_*
-        </code>{" "}
-        or{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-zinc-800">
-          ADMIN_*
-        </code>{" "}
-        credentials +{" "}
-        <code className="rounded bg-[var(--surface-elevated)] px-1 text-[10px] text-zinc-800">
-          ADMIN_SESSION_SECRET
-        </code>{" "}
-        (min 16 chars) on your host, then redeploy.
-      </p>
 
-      <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div>
           <label
             htmlFor="adm-user"
-            className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-800"
+            className="text-sm font-semibold uppercase tracking-wide text-zinc-800"
           >
             Username
           </label>
@@ -94,7 +78,7 @@ export function AdminLoginForm() {
         <div>
           <label
             htmlFor="adm-pass"
-            className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-800"
+            className="text-sm font-semibold uppercase tracking-wide text-zinc-800"
           >
             Password
           </label>
@@ -117,7 +101,7 @@ export function AdminLoginForm() {
         <button
           type="submit"
           disabled={pending}
-          className="moa-cta w-full py-3 text-[10px] font-semibold uppercase tracking-[0.22em] disabled:opacity-60"
+          className="moa-cta w-full py-3.5 text-sm font-semibold uppercase tracking-[0.15em] disabled:opacity-60"
         >
           {pending ? "Signing in…" : "Sign in"}
         </button>

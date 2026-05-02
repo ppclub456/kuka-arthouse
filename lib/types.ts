@@ -12,7 +12,7 @@ export type ProductLicense = "personal" | "commercial" | "extended";
 export type Product = {
   id: string;
   title: string;
-  /** Whole-dollar amount in AUD (catalog list price) */
+  /** Whole-dollar amount in AUD (literal decimals are floored in data/products helper `p`) */
   priceAud: number;
   imageSrc: string;
   imageAlt: string;

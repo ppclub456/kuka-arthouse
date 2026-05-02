@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   const stripe = getStripe();
   if (!stripe) {
     return NextResponse.json(
-      { error: "Stripe is not configured (STRIPE_SECRET_KEY)." },
+      { error: "Checkout is temporarily unavailable. Please try again later." },
       { status: 503 },
     );
   }
@@ -24,16 +24,16 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
   try {
-    const { items, feeAud, subtotalAud, tipAud, totalAud } =
+    const { items, shippingAud, subtotalAud, tipAud, totalAud } =
       pricingStoreCheckout(body.lines ?? [], body.tipAmountAud ?? 0);
 
     if (totalAud < 0.5) {
       return NextResponse.json(
-        { error: "Order total must be at least A$0.50 for card payments." },
+        { error: "Order total must be at least A$0.50." },
         { status: 400 },
       );
     }
@@ -54,13 +54,15 @@ export async function POST(request: Request) {
       },
     }));
 
-    if (feeAud >= 0.005) {
+    if (shippingAud >= 0.005) {
       lineItems.push({
         quantity: 1,
         price_data: {
           currency: "aud" as const,
-          product_data: { name: "Processing fee (8%)" },
-          unit_amount: Math.round(feeAud * 100),
+          product_data: {
+            name: "Shipping (flat rate, per order)",
+          },
+          unit_amount: Math.round(shippingAud * 100),
         },
       });
     }
@@ -78,13 +80,13 @@ export async function POST(request: Request) {
         checkout_kind: "store",
         subtotal_aud: subtotalAud.toFixed(2),
         tip_aud: tipAud.toFixed(2),
-        fee_aud: feeAud.toFixed(2),
+        shipping_aud: shippingAud.toFixed(2),
       },
     });
 
     if (!session.url) {
       return NextResponse.json(
-        { error: "Stripe did not return a checkout URL." },
+        { error: "Could not start checkout. Please try again." },
         { status: 500 },
       );
     }

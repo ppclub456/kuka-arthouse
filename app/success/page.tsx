@@ -12,7 +12,7 @@ export default async function SuccessPage({ searchParams }: Props) {
 
   let headline = "Thank you";
   let detail =
-    "If you completed Stripe Checkout, your payment is processed by Stripe. Check your email for confirmation in live mode.";
+    "If you completed payment, you should receive a confirmation by email when your order is live.";
 
   if (sessionId) {
     const stripe = getStripe();
@@ -21,7 +21,7 @@ export default async function SuccessPage({ searchParams }: Props) {
         const s = await stripe.checkout.sessions.retrieve(sessionId);
         if (s.payment_status === "paid") {
           headline = "Payment successful";
-          detail = `Checkout session is paid. Reference: ${s.id}`;
+          detail = `Payment received. Reference: ${s.id}`;
         } else if (s.payment_status === "unpaid") {
           headline = "Payment not completed";
           detail =
@@ -29,7 +29,7 @@ export default async function SuccessPage({ searchParams }: Props) {
         }
       } catch {
         detail =
-          "We could not verify this session. Check STRIPE_SECRET_KEY or the link you used.";
+          "We could not verify this payment session. If you were charged, save your receipt and contact support.";
       }
     }
   }

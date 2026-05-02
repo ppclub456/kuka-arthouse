@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useCart } from "@/context/cart-context";
 import { formatMoaPrice } from "@/lib/format";
+import { STORE_FLAT_SHIPPING_AUD } from "@/lib/pricing-store";
 
 const COUNTRIES = [
+  "Australia",
   "New Zealand",
   "United States",
   "United Kingdom",
-  "Australia",
   "Canada",
   "Germany",
   "France",
@@ -39,7 +40,7 @@ export function CheckoutForm() {
   const [street, setStreet] = useState("");
   const [city, setCity] = useState("");
   const [postal, setPostal] = useState("");
-  const [country, setCountry] = useState("New Zealand");
+  const [country, setCountry] = useState("Australia");
 
   const tipAmount = useMemo(() => {
     if (tipChoice === "none") return 0;
@@ -51,13 +52,13 @@ export function CheckoutForm() {
   }, [tipChoice, tipCustom]);
 
   const subtotalWithTip = subtotalAud + tipAmount;
-  const feeAmount = subtotalWithTip * 0.08;
-  const orderTotal = subtotalWithTip + feeAmount;
+  const shippingAmount = STORE_FLAT_SHIPPING_AUD;
+  const orderTotal = subtotalWithTip + shippingAmount;
 
   const [payError, setPayError] = useState("");
   const [payPending, setPayPending] = useState(false);
 
-  async function handleStripeCheckout() {
+  async function handleProceedToPayment() {
     setPayError("");
     setPayPending(true);
     try {
@@ -78,16 +79,16 @@ export function CheckoutForm() {
         url?: string;
       };
       if (!res.ok) {
-        setPayError(data.error ?? "Could not start Stripe Checkout");
+        setPayError(data.error ?? "Could not start checkout. Try again shortly.");
         return;
       }
       if (data.url) {
         window.location.href = data.url;
         return;
       }
-      setPayError("No checkout URL returned");
+      setPayError("Could not open the payment page. Please try again.");
     } catch {
-      setPayError("Network error");
+      setPayError("Network error. Please try again.");
     } finally {
       setPayPending(false);
     }
@@ -348,13 +349,8 @@ export function CheckoutForm() {
               Payment
             </h2>
             <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-              You will be redirected to <strong className="text-[var(--foreground)]">Stripe Checkout</strong>{" "}
-              to pay by card. Pricing is fixed on the server from your cart (subtotal, optional tip, and
-              8% processing fee as shown in the summary).
-            </p>
-            <p className="mt-3 text-[12px] leading-relaxed text-[var(--muted-foreground)]">
-              Requires <code className="font-mono text-[11px] text-cyan-400/80">STRIPE_SECRET_KEY</code>{" "}
-              in your host environment (Vercel Project Settings → Environment Variables).
+              You&apos;ll complete payment on our secure checkout page. Your order summary includes
+              a flat shipping fee for this order ({formatMoaPrice(STORE_FLAT_SHIPPING_AUD)}).
             </p>
           </section>
 
@@ -367,14 +363,15 @@ export function CheckoutForm() {
           <button
             type="button"
             disabled={payPending}
-            onClick={() => void handleStripeCheckout()}
+            onClick={() => void handleProceedToPayment()}
             className="moa-cta w-full py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] shadow-md shadow-[var(--accent)]/20 disabled:opacity-60"
           >
-            {payPending ? "Opening Stripe…" : "Pay with Stripe"}
+            {payPending ? "Opening secure checkout…" : "Proceed to payment"}
           </button>
           <p className="text-center text-xs leading-relaxed text-[var(--muted-foreground)]">
-            <span className="font-medium text-[var(--foreground)]">Secure checkout:</span>{" "}
-            Card details are collected by Stripe — this site does not store your full card number.
+            <span className="font-medium text-[var(--foreground)]">Secure payment:</span>{" "}
+            Card details are entered on our payment provider&apos;s encrypted page — we never see your
+            full card number.
           </p>
         </form>
       </div>
@@ -427,9 +424,9 @@ export function CheckoutForm() {
               </span>
             </div>
             <div className="flex justify-between text-[var(--muted-foreground)]">
-              <span>Fee (8%)</span>
+              <span>Shipping (flat rate, per order)</span>
               <span className="font-medium text-[var(--foreground)]">
-                {formatMoaPrice(feeAmount)}
+                {formatMoaPrice(shippingAmount)}
               </span>
             </div>
             <div className="flex justify-between border-t border-[var(--border)] pt-3 text-base font-semibold">

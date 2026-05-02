@@ -2,10 +2,12 @@ import { PRODUCTS } from "@/data/products";
 
 export type StoreCheckoutLineInput = { productId: string; quantity: number };
 
+/** Flat shipping applied once per order (AUD). */
+export const STORE_FLAT_SHIPPING_AUD = 12;
+
 export function pricingStoreCheckout(
   rawLines: StoreCheckoutLineInput[],
   tipAud: number,
-  feeFraction = 0.08,
 ) {
   if (!Array.isArray(rawLines) || rawLines.length === 0) {
     throw new Error("Cart is empty");
@@ -34,14 +36,13 @@ export function pricingStoreCheckout(
     });
   }
 
-  const afterTip = subtotal + tip;
-  const feeAud = afterTip * feeFraction;
-  const totalAud = afterTip + feeAud;
+  const shippingAud = STORE_FLAT_SHIPPING_AUD;
+  const totalAud = subtotal + tip + shippingAud;
 
   return {
     subtotalAud: subtotal,
     tipAud: tip,
-    feeAud,
+    shippingAud,
     totalAud,
     items,
   };

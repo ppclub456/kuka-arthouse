@@ -12,7 +12,7 @@ export type ProductLicense = "personal" | "commercial" | "extended";
 export type Product = {
   id: string;
   title: string;
-  /** Decimal amount in AUD — Inka / Shopify list prices */
+  /** Whole-dollar amount in AUD (catalog list price) */
   priceAud: number;
   imageSrc: string;
   imageAlt: string;

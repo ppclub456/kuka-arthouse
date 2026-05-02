@@ -52,8 +52,8 @@ export function SiteHeader() {
             </Link>
           )}
           <Link
-            href="/#partner"
-            className="hidden text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 transition hover:text-cyan-300 sm:inline"
+            href="/reseller"
+            className="max-w-[8.5rem] truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 transition hover:text-cyan-300 sm:max-w-none sm:tracking-[0.2em]"
           >
             Become a Reseller
           </Link>

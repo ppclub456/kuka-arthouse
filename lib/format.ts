@@ -1,7 +1,7 @@
 const audFormatter = new Intl.NumberFormat("en-AU", {
   style: "currency",
   currency: "AUD",
-  minimumFractionDigits: 2,
+  minimumFractionDigits: 0,
   maximumFractionDigits: 2,
 });
 

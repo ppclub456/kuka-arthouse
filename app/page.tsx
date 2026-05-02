@@ -101,16 +101,16 @@ export default function HomePage() {
       </Suspense>
 
       <section
-        id="partner"
+        id="reseller"
         className="border-t border-[var(--border)] bg-[var(--accent-soft)] py-16"
       >
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.35em] text-cyan-400">
-            Become a partner
+            Become a reseller
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-[var(--muted-foreground)]">
-            Become an affiliate partner and earn on sales you refer — passive
-            income from a curated digital catalog.
+            Apply to sell our catalog to your audience. Share your business details
+            and we will review reseller or referral terms by region.
           </p>
           <ul className="mx-auto mt-6 max-w-md space-y-2 text-left text-[13px] text-[var(--muted-foreground)]">
             <li className="flex gap-2">
@@ -127,12 +127,12 @@ export default function HomePage() {
               art, vintage, floral &amp; more
             </li>
           </ul>
-          <a
-            href="mailto:support@example.com"
+          <Link
+            href="/reseller"
             className="mt-8 inline-block text-[10px] font-semibold uppercase tracking-[0.25em] text-cyan-400 underline-offset-4 hover:text-cyan-300 hover:underline"
           >
-            Become a Partner
-          </a>
+            Become a Reseller — register
+          </Link>
         </div>
       </section>
 
@@ -204,8 +204,8 @@ export default function HomePage() {
                 </a>
               </li>
               <li>
-                <Link href="/#partner" className="hover:text-cyan-300">
-                  Become a Partner
+                <Link href="/reseller" className="hover:text-cyan-300">
+                  Become a Reseller
                 </Link>
               </li>
             </ul>

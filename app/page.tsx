@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { StoreSection } from "@/components/store-section";
 import { PRODUCTS, STORE_BRAND } from "@/data/products";
-import { STORE_SUPPORT_EMAIL } from "@/lib/store-contact";
 
 function StoreLoading() {
   return (
@@ -216,9 +215,9 @@ export default function HomePage() {
                 </Link>
               </li>
               <li>
-                <a href={`mailto:${STORE_SUPPORT_EMAIL}`} className="hover:text-cyan-300">
+                <Link href="/contact" className="hover:text-cyan-300">
                   Contact Us
-                </a>
+                </Link>
               </li>
               <li>
                 <Link href="/reseller" className="hover:text-cyan-300">

@@ -5,7 +5,7 @@ import {
 } from "@/lib/admin-quote";
 import { appBaseUrl } from "@/lib/checkout-base-url";
 import { requireAdminOr401 } from "@/lib/require-admin-session";
-import { signPayLinkJWT } from "@/lib/payment-link-jwt";
+import { signPayLinkCompact } from "@/lib/payment-link-compact";
 
 export const dynamic = "force-dynamic";
 
@@ -29,15 +29,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const jwt = await signPayLinkJWT({
+    const compact = signPayLinkCompact({
       amountAud: q.lineTotalAud,
       title: q.title,
       mode: q.mode,
       productId: q.productId,
+      reference: q.paymentReference,
     });
 
     const base = appBaseUrl(request.headers);
-    const url = `${base}/pay?token=${encodeURIComponent(jwt)}`;
+    const qs = encodeURIComponent(compact);
+    const url = `${base}/pay?p=${qs}`;
 
     return NextResponse.json({ url });
   } catch (e) {

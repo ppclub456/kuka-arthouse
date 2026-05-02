@@ -6,6 +6,8 @@ export type AdminQuotePayload = {
   mode: AdminQuoteMode;
   invoiceTitle?: string;
   invoiceTotalAud?: number;
+  /** Shown on /pay as “Order / payment reference” */
+  paymentReference?: string;
   productId?: string;
   usePriceOverride?: boolean;
   catalogOverrideAud?: number;
@@ -22,6 +24,11 @@ export function resolveAdminStripeQuote(payload: AdminQuotePayload) {
   let title = "";
   const imageSrcs: string[] = [];
   let productId: string | undefined;
+
+  const ref =
+    typeof payload.paymentReference === "string"
+      ? payload.paymentReference.trim().slice(0, 40)
+      : "";
 
   if (payload.mode === "invoice") {
     qtySafe = 1;
@@ -57,5 +64,6 @@ export function resolveAdminStripeQuote(payload: AdminQuotePayload) {
     imageSrcs,
     productId,
     mode: payload.mode,
+    ...(ref ? { paymentReference: ref } : {}),
   };
 }

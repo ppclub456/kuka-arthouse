@@ -16,6 +16,7 @@ export function AdminPaymentLinkTool() {
   const [customAmount, setCustomAmount] = useState("");
   const [usePriceOverride, setUsePriceOverride] = useState(false);
   const [quantity, setQuantity] = useState("1");
+  const [paymentReference, setPaymentReference] = useState("");
   const [payPageUrl, setPayPageUrl] = useState("");
   const [genError, setGenError] = useState("");
   const [genPending, setGenPending] = useState(false);
@@ -76,6 +77,7 @@ export function AdminPaymentLinkTool() {
           mode,
           invoiceTitle: invoiceTitle.trim(),
           invoiceTotalAud,
+          paymentReference: paymentReference.trim(),
           productId,
           usePriceOverride,
           catalogOverrideAud: Number.parseFloat(catalogOverride.trim() || "0"),
@@ -127,8 +129,34 @@ export function AdminPaymentLinkTool() {
         <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         </code>
-        .
+        {" "}(same project as Stripe secret — required for embedded card fields on{" "}
+        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
+          /pay
+        </code>
+        ).
+        Links use short signed URLs (
+        <code className="rounded bg-[var(--surface-elevated)] px-1 font-mono text-[10px]">
+          ?p=
+        </code>
+        ).
       </p>
+
+      <div className="mt-6">
+        <label
+          htmlFor="pay-ref"
+          className="text-[11px] uppercase tracking-wider text-zinc-600"
+        >
+          Order / payment reference (optional · shown on pay page)
+        </label>
+        <input
+          id="pay-ref"
+          value={paymentReference}
+          onChange={(e) => setPaymentReference(e.target.value)}
+          className={input}
+          placeholder="e.g. Invoice #4821"
+          autoComplete="off"
+        />
+      </div>
 
       <fieldset className="mt-8 space-y-3">
         <legend className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">

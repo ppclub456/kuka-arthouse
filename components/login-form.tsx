@@ -79,16 +79,6 @@ export function LoginForm() {
           Sign in
         </button>
       </form>
-      <p className="mt-6 text-center text-[11px] text-[var(--muted-foreground)]">
-        Store staff generating payment links?{" "}
-        <Link
-          href="/admin/login"
-          className="font-medium text-violet-400 underline-offset-4 hover:text-violet-300 hover:underline"
-        >
-          Super admin sign in
-        </Link>{" "}
-        — use username + password from your host (not customer email login).
-      </p>
       <p className="mt-8 border-t border-[var(--border-dim)] pt-6 text-center text-[12px] text-[var(--muted-foreground)]">
         <Link
           href="/"

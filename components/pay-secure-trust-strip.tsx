@@ -1,5 +1,28 @@
 /** Card-brand marks + short security copy for /pay (styled for dark UI). */
 
+/** Networks commonly available via Stripe (varies by country & merchant settings). */
+
+function Badge({
+  bg,
+  text,
+  className = "",
+  narrow,
+}: {
+  bg: string;
+  text: string;
+  className?: string;
+  narrow?: boolean;
+}) {
+  return (
+    <div
+      className={`flex h-8 shrink-0 items-center justify-center rounded-[3px] px-2 font-bold tracking-wide text-white ${bg} ${narrow ? "text-[8px]" : "text-[9px]"} ${className}`}
+      aria-hidden
+    >
+      {text}
+    </div>
+  );
+}
+
 function VisaMark() {
   return (
     <div
@@ -19,9 +42,9 @@ function MastercardMark() {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 40 24"
       aria-hidden
-      className="h-6 w-auto"
+      className="h-8 shrink-0 w-auto"
     >
-      <rect width="40" height="24" rx="3" fill="#000" fillOpacity="0.25" />
+      <rect width="40" height="24" rx="3" fill="#000" fillOpacity="0.35" />
       <circle cx="16" cy="12" r="7" fill="#EB001B" />
       <circle cx="24" cy="12" r="7" fill="#F79E1B" />
       <path
@@ -29,6 +52,42 @@ function MastercardMark() {
         d="M20 7.2a6.9 6.9 0 0 1 0 9.6 6.9 6.9 0 0 1 0-9.6z"
       />
     </svg>
+  );
+}
+
+function AmexMark() {
+  return <Badge bg="bg-[#016FD0]" text="AMEX" />;
+}
+
+function DiscoverMark() {
+  return (
+    <Badge
+      bg="bg-[#FF6000]"
+      text="DISCOVER"
+      narrow
+      className="px-2.5 tracking-tight"
+    />
+  );
+}
+
+function UnionPayMark() {
+  return (
+    <Badge
+      bg="bg-[#046A38]"
+      text="UnionPay"
+      narrow
+      className="px-2 font-semibold tracking-tight"
+    />
+  );
+}
+
+function JcbMark() {
+  return <Badge bg="bg-[#0B4EA2]" text="JCB" />;
+}
+
+function DinersMark() {
+  return (
+    <Badge bg="bg-[#0079BE]" text="DINERS" narrow className="tracking-tighter" />
   );
 }
 
@@ -59,21 +118,32 @@ export function PaySecureTrustStrip({ className = "" }: Props) {
     <div className={`rounded-sm border border-white/10 bg-[var(--surface-elevated)]/35 px-4 py-3 ${className}`}>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-          Accepted cards
+          Major cards accepted
         </span>
-        <div className="flex items-center gap-3" aria-label="Visa and Mastercard">
+        <div
+          className="flex flex-wrap items-center gap-2 sm:gap-2.5"
+          aria-label="Visa, Mastercard, American Express, Discover, UnionPay, JCB, Diners Club"
+        >
           <VisaMark />
           <MastercardMark />
+          <AmexMark />
+          <DiscoverMark />
+          <UnionPayMark />
+          <JcbMark />
+          <DinersMark />
         </div>
       </div>
       <div className="mt-3 flex gap-2 text-xs leading-relaxed text-slate-400">
         <LockIcon />
         <p>
-          <span className="font-medium text-slate-300">Secure payment.</span> This page uses
-          encrypted checkout. Your card is processed by Stripe; we never see or store your full
-          card number.
+          <span className="font-medium text-slate-300">Secure payment.</span> Encrypted checkout with
+          bank-level standards. Your full card number is never stored on our servers.
         </p>
       </div>
+      <p className="mt-2 text-[10px] leading-snug text-slate-500">
+        Which brands work depends on your card issuer and country; unsupported cards may be
+        declined at checkout.
+      </p>
     </div>
   );
 }

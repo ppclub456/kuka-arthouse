@@ -9,9 +9,17 @@ import { getStripe } from "@/lib/stripe-server";
 
 export const dynamic = "force-dynamic";
 
+type Addr = {
+  name?: string;
+  line1?: string;
+  city?: string;
+  postal_code?: string;
+  countryLabel?: string;
+};
+
 type Body = {
   code?: string;
-  billing?: {
+  shipping?: {
     email?: string;
     name?: string;
     phone?: string;
@@ -20,6 +28,8 @@ type Body = {
     postal_code?: string;
     countryLabel?: string;
   };
+  billing_same_as_shipping?: boolean;
+  billing_address?: Addr;
 };
 
 function trim(max: number, s: string): string {
@@ -61,31 +71,83 @@ export async function POST(request: Request) {
     );
   }
 
-  const b = body.billing ?? {};
-  const email = trim(320, String(b.email ?? ""));
-  const name = trim(240, String(b.name ?? ""));
-  const line1 = trim(280, String(b.line1 ?? ""));
-  const city = trim(120, String(b.city ?? ""));
-  const postal = trim(40, String(b.postal_code ?? ""));
-  const countryIso = countryLabelToIso(String(b.countryLabel ?? "Australia"));
-  const phone = trim(40, String(b.phone ?? ""));
+  const s = body.shipping ?? {};
+  const email = trim(320, String(s.email ?? ""));
+  const shippingName = trim(240, String(s.name ?? ""));
+  const shippingLine1 = trim(280, String(s.line1 ?? ""));
+  const shippingCity = trim(120, String(s.city ?? ""));
+  const shippingPostal = trim(40, String(s.postal_code ?? ""));
+  const shippingCountryIso = countryLabelToIso(
+    String(s.countryLabel ?? "Australia"),
+  );
+  const phone = trim(40, String(s.phone ?? ""));
 
-  if (!email.includes("@") || name.length < 2 || line1.length < 4 || city.length < 2) {
+  if (
+    !email.includes("@") ||
+    shippingName.length < 2 ||
+    shippingLine1.length < 4 ||
+    shippingCity.length < 2
+  ) {
     return NextResponse.json(
-      { error: "Please fill in billing: email, name, street address, city." },
+      {
+        error:
+          "Please fill in shipping: email, recipient name, street address, and city.",
+      },
       { status: 400 },
     );
+  }
+
+  const billingSameAsShipping =
+    typeof body.billing_same_as_shipping === "boolean"
+      ? body.billing_same_as_shipping
+      : true;
+
+  let billingName = shippingName;
+  let billingLine1 = shippingLine1;
+  let billingCity = shippingCity;
+  let billingPostal = shippingPostal;
+  let billingCountryIso = shippingCountryIso;
+
+  if (!billingSameAsShipping) {
+    const b = body.billing_address ?? {};
+    billingName = trim(240, String(b.name ?? ""));
+    billingLine1 = trim(280, String(b.line1 ?? ""));
+    billingCity = trim(120, String(b.city ?? ""));
+    billingPostal = trim(40, String(b.postal_code ?? ""));
+    billingCountryIso = countryLabelToIso(
+      String(b.countryLabel ?? "Australia"),
+    );
+
+    if (
+      billingName.length < 2 ||
+      billingLine1.length < 4 ||
+      billingCity.length < 2
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Please fill in billing: name on card/account, street address, and city.",
+        },
+        { status: 400 },
+      );
+    }
   }
 
   const metaBase: Record<string, string> = {
     checkout_kind: "admin_link",
     admin_mode: offer.mode.slice(0, 48),
     pay_link_code: offer.code,
-    billing_name: name.slice(0, 120),
-    billing_line1: line1.slice(0, 140),
-    billing_city: city.slice(0, 80),
-    billing_postal: postal.slice(0, 20),
-    billing_country: countryIso.slice(0, 12),
+    billing_same_as_shipping: billingSameAsShipping ? "true" : "false",
+    shipping_name: shippingName.slice(0, 120),
+    shipping_line1: shippingLine1.slice(0, 140),
+    shipping_city: shippingCity.slice(0, 80),
+    shipping_postal: shippingPostal.slice(0, 20),
+    shipping_country: shippingCountryIso.slice(0, 12),
+    billing_name: billingName.slice(0, 120),
+    billing_line1: billingLine1.slice(0, 140),
+    billing_city: billingCity.slice(0, 80),
+    billing_postal: billingPostal.slice(0, 20),
+    billing_country: billingCountryIso.slice(0, 12),
     ...(offer.productId ? { product_id: offer.productId } : {}),
     ...(offer.reference ? { payment_reference: offer.reference.slice(0, 40) } : {}),
     ...(phone ? { billing_phone: phone.slice(0, 32) } : {}),
@@ -113,6 +175,16 @@ export async function POST(request: Request) {
           receipt_email: email,
           description: offer.title.slice(0, 200),
           metadata: mergedMeta,
+          shipping: {
+            name: shippingName,
+            phone: phone || undefined,
+            address: {
+              line1: shippingLine1,
+              city: shippingCity,
+              postal_code: shippingPostal || undefined,
+              country: shippingCountryIso,
+            },
+          },
         });
         if (updated.client_secret) {
           return NextResponse.json({
@@ -130,6 +202,16 @@ export async function POST(request: Request) {
       automatic_payment_methods: { enabled: true },
       description: offer.title.slice(0, 200),
       metadata: metaBase,
+      shipping: {
+        name: shippingName,
+        phone: phone || undefined,
+        address: {
+          line1: shippingLine1,
+          city: shippingCity,
+          postal_code: shippingPostal || undefined,
+          country: shippingCountryIso,
+        },
+      },
     });
 
     if (!pi.client_secret) {

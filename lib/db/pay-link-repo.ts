@@ -7,7 +7,7 @@ import {
 } from "@/lib/db/pay-link-code";
 import { payLinks } from "@/lib/db/schema";
 
-const DEFAULT_LINK_TTL_DAYS = 14;
+const DEFAULT_LINK_TTL_DAYS = 30;
 
 export type PayLinkOfferRow = typeof payLinks.$inferSelect;
 

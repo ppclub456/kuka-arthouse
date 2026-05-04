@@ -25,31 +25,62 @@ export function PayLinkCheckout({
   amountLabel,
   publishableKey,
 }: PayLinkCheckoutProps) {
-  const [step, setStep] = useState<"billing" | "payment">("billing");
+  const [step, setStep] = useState<"details" | "payment">("details");
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [line1, setLine1] = useState("");
-  const [city, setCity] = useState("");
-  const [postal, setPostal] = useState("");
-  const [countryLabel, setCountryLabel] = useState("Australia");
+  const [shipLine1, setShipLine1] = useState("");
+  const [shipCity, setShipCity] = useState("");
+  const [shipPostal, setShipPostal] = useState("");
+  const [shipCountryLabel, setShipCountryLabel] = useState("Australia");
+
+  const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
+  const [billName, setBillName] = useState("");
+  const [billLine1, setBillLine1] = useState("");
+  const [billCity, setBillCity] = useState("");
+  const [billPostal, setBillPostal] = useState("");
+  const [billCountryLabel, setBillCountryLabel] = useState("Australia");
+
+  function syncBillingFromShipping() {
+    setBillName(name);
+    setBillLine1(shipLine1);
+    setBillCity(shipCity);
+    setBillPostal(shipPostal);
+    setBillCountryLabel(shipCountryLabel);
+  }
+
+  function toggleBillingSame(checked: boolean) {
+    setBillingSameAsShipping(checked);
+    if (!checked) syncBillingFromShipping();
+  }
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
 
+  const stripeBillingCountry =
+    billingSameAsShipping ? shipCountryLabel : billCountryLabel;
+  const stripeBillingLine1 =
+    billingSameAsShipping ? shipLine1 : billLine1;
+  const stripeBillingCity =
+    billingSameAsShipping ? shipCity : billCity;
+  const stripeBillingPostal =
+    billingSameAsShipping ? shipPostal : billPostal;
+  const stripeBillingName =
+    billingSameAsShipping ? name : billName || name;
+
   const billingPrefill: StripeBillingPrefill | undefined =
     step === "payment" && email
       ? {
           email,
-          name,
+          name: stripeBillingName,
           phone: phone.trim() || undefined,
           address: {
-            line1,
-            city,
-            postal_code: postal,
-            country: countryLabelToIso(countryLabel),
+            line1: stripeBillingLine1,
+            city: stripeBillingCity,
+            postal_code: stripeBillingPostal,
+            country: countryLabelToIso(stripeBillingCountry),
           },
         }
       : undefined;
@@ -60,6 +91,18 @@ export function PayLinkCheckout({
       setMsg("Payments are not configured (missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY).");
       return;
     }
+
+    if (!billingSameAsShipping) {
+      if (
+        (billName || "").trim().length < 2 ||
+        (billLine1 || "").trim().length < 4 ||
+        (billCity || "").trim().length < 2
+      ) {
+        setMsg("Please complete billing: name, street address, and city.");
+        return;
+      }
+    }
+
     setBusy(true);
     try {
       const res = await fetch("/api/stripe/create-pay-link-intent", {
@@ -67,15 +110,27 @@ export function PayLinkCheckout({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code,
-          billing: {
+          shipping: {
             email,
             name,
             phone,
-            line1,
-            city,
-            postal_code: postal,
-            countryLabel,
+            line1: shipLine1,
+            city: shipCity,
+            postal_code: shipPostal,
+            countryLabel: shipCountryLabel,
           },
+          billing_same_as_shipping: billingSameAsShipping,
+          ...(billingSameAsShipping
+            ? {}
+            : {
+                billing_address: {
+                  name: billName.trim(),
+                  line1: billLine1.trim(),
+                  city: billCity.trim(),
+                  postal_code: billPostal.trim(),
+                  countryLabel: billCountryLabel,
+                },
+              }),
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
@@ -99,7 +154,7 @@ export function PayLinkCheckout({
     }
   }
 
-  function handleBillingSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     void startPayment();
   }
@@ -125,14 +180,13 @@ export function PayLinkCheckout({
         </div>
       </dl>
 
-      {step === "billing" ? (
-        <form onSubmit={handleBillingSubmit} className="mt-6 space-y-4">
+      {step === "details" ? (
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Billing information
+            Shipping information
           </p>
           <p className="text-xs text-[var(--muted-foreground)]">
-            Enter the details matching your card or invoice. Same page embedded card payment — no Stripe
-            Checkout redirect for standard cards.
+            Where we should send order updates and deliver your artwork where applicable.
           </p>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -152,7 +206,7 @@ export function PayLinkCheckout({
             </div>
             <div className="sm:col-span-2">
               <label htmlFor="pl-name" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                Full name
+                Full name <span className="normal-case opacity-70">(recipient)</span>
               </label>
               <input
                 id="pl-name"
@@ -177,51 +231,52 @@ export function PayLinkCheckout({
               />
             </div>
             <div className="sm:col-span-2">
-              <label htmlFor="pl-line1" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                Street address
+              <label htmlFor="pl-ship-line1" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                Shipping street address
               </label>
               <input
-                id="pl-line1"
-                autoComplete="address-line1"
+                id="pl-ship-line1"
+                autoComplete="shipping address-line1"
                 required
-                value={line1}
-                onChange={(e) => setLine1(e.target.value)}
+                value={shipLine1}
+                onChange={(e) => setShipLine1(e.target.value)}
                 className={inputCls}
               />
             </div>
             <div>
-              <label htmlFor="pl-city" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <label htmlFor="pl-ship-city" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                 City
               </label>
               <input
-                id="pl-city"
-                autoComplete="address-level2"
+                id="pl-ship-city"
+                autoComplete="shipping address-level2"
                 required
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={shipCity}
+                onChange={(e) => setShipCity(e.target.value)}
                 className={inputCls}
               />
             </div>
             <div>
-              <label htmlFor="pl-postal" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <label htmlFor="pl-ship-postal" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                 Postcode / ZIP
               </label>
               <input
-                id="pl-postal"
-                autoComplete="postal-code"
-                value={postal}
-                onChange={(e) => setPostal(e.target.value)}
+                id="pl-ship-postal"
+                autoComplete="shipping postal-code"
+                value={shipPostal}
+                onChange={(e) => setShipPostal(e.target.value)}
                 className={inputCls}
               />
             </div>
             <div className="sm:col-span-2">
-              <label htmlFor="pl-country" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <label htmlFor="pl-ship-country" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                 Country / region
               </label>
               <select
-                id="pl-country"
-                value={countryLabel}
-                onChange={(e) => setCountryLabel(e.target.value)}
+                id="pl-ship-country"
+                autoComplete="shipping country"
+                value={shipCountryLabel}
+                onChange={(e) => setShipCountryLabel(e.target.value)}
                 className={inputCls}
               >
                 {CHECKOUT_COUNTRY_LABELS.map((c) => (
@@ -232,6 +287,106 @@ export function PayLinkCheckout({
               </select>
             </div>
           </div>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-sm border border-[var(--border-dim)] bg-[var(--surface-elevated)]/35 px-4 py-3 text-sm">
+            <input
+              type="checkbox"
+              checked={billingSameAsShipping}
+              onChange={(e) => toggleBillingSame(e.target.checked)}
+              className="mt-1 shrink-0 rounded border-cyan-500/40 bg-[var(--input-bg)]"
+            />
+            <span>
+              <span className="font-medium text-[var(--foreground)]">
+                Billing address is the same as shipping address
+              </span>
+              <span className="mt-0.5 block text-xs text-[var(--muted-foreground)]">
+                Your card issuer may verify the billing address you enter later on the secure card form if it differs.
+              </span>
+            </span>
+          </label>
+
+          {!billingSameAsShipping ? (
+            <div className="rounded-sm border border-cyan-500/20 bg-[var(--surface-elevated)]/20 p-4 sm:p-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Billing information
+              </p>
+              <p className="mt-2 text-xs text-[var(--muted-foreground)]">
+                Card billing / statement address — can differ from where we ship your order.
+              </p>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label htmlFor="pl-bill-name" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Full name <span className="normal-case opacity-70">(on card / account)</span>
+                  </label>
+                  <input
+                    id="pl-bill-name"
+                    autoComplete="billing name"
+                    required={!billingSameAsShipping}
+                    value={billName}
+                    onChange={(e) => setBillName(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="pl-bill-line1" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Billing street address
+                  </label>
+                  <input
+                    id="pl-bill-line1"
+                    autoComplete="billing address-line1"
+                    required={!billingSameAsShipping}
+                    value={billLine1}
+                    onChange={(e) => setBillLine1(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pl-bill-city" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    City
+                  </label>
+                  <input
+                    id="pl-bill-city"
+                    autoComplete="billing address-level2"
+                    required={!billingSameAsShipping}
+                    value={billCity}
+                    onChange={(e) => setBillCity(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pl-bill-postal" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Postcode / ZIP
+                  </label>
+                  <input
+                    id="pl-bill-postal"
+                    autoComplete="billing postal-code"
+                    value={billPostal}
+                    onChange={(e) => setBillPostal(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="pl-bill-country" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Country / region
+                  </label>
+                  <select
+                    id="pl-bill-country"
+                    autoComplete="billing country"
+                    value={billCountryLabel}
+                    onChange={(e) => setBillCountryLabel(e.target.value)}
+                    className={inputCls}
+                  >
+                    {CHECKOUT_COUNTRY_LABELS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {msg ? (
             <p className="text-sm text-red-400/95" role="alert">
@@ -265,13 +420,13 @@ export function PayLinkCheckout({
           <button
             type="button"
             onClick={() => {
-              setStep("billing");
+              setStep("details");
               setClientSecret(null);
               setMsg("");
             }}
             className="mt-6 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 underline-offset-4 hover:text-cyan-400 hover:underline"
           >
-            ← Edit billing details
+            ← Edit shipping &amp; billing details
           </button>
         </div>
       ) : null}

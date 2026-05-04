@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PayLinkCheckoutProps } from "@/components/pay-link-checkout";
 import { PayLinkCheckout } from "@/components/pay-link-checkout";
+import { PaySecureTrustStrip } from "@/components/pay-secure-trust-strip";
 import { StorePolicyLinks } from "@/components/store-policy-links";
 import { EmbeddedStripePayment } from "@/components/embedded-stripe-payment";
 import { formatMoaPrice } from "@/lib/format";
@@ -141,10 +142,7 @@ export default async function PayLinkPage({ searchParams }: Props) {
         <h1 className="mt-4 text-lg font-semibold text-[var(--foreground)]">
           Secure payment · code {offer.code}
         </h1>
-        <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-          Enter billing details, then complete your card payment on this page (embedded Stripe
-          Elements). Your link has been counted as viewed in the merchant admin.
-        </p>
+        <PaySecureTrustStrip className="mt-4" />
 
         <PayLinkCheckout {...payload} />
 
@@ -226,12 +224,10 @@ export default async function PayLinkPage({ searchParams }: Props) {
         You opened a legacy-format payment link — please ask the merchant for a newer 6-letter
         code link for smoother checkout and billing collection.
       </p>
-      <h1 className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+      <h1 className="mt-4 text-lg font-semibold text-[var(--foreground)]">
         Payment summary
       </h1>
-      <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-        Card payment runs embedded on this site (no Stripe Checkout redirect for standard flows).
-      </p>
+      <PaySecureTrustStrip className="mt-4" />
 
       <div className="ai-panel mt-8 rounded-sm p-6 sm:p-8">
         <dl>

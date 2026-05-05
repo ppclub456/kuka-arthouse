@@ -6,7 +6,8 @@ import type { Product } from "@/lib/types";
  * All listings are described as physical prints at a uniform size (see `defaultPhysicalDescription`).
  * Imagery: Shopify CDN — demo only; keep vendor permission on file.
  *
- * Catalog list prices are whole AUD amounts; literals with decimals are truncated with Math.floor inside helper `p`.
+ * Catalog list AUD: each SKU uses a deterministic multiplier ≈ uniformly in [3, 4.5] × the
+ * base literal passed to `p()`, rounded to integer (see catalogListPriceMultiplier).
  */
 export const STORE_BRAND = "Kuka Arthouse";
 
@@ -30,16 +31,29 @@ function defaultPhysicalDescription(title: string): string {
   return `${title}. ${bundle}Fine-art reproduction on archival-grade stock as a physical print (${STANDARD_SIZE_CM}), colour-balanced for wall display. Shipped with protective packaging; ready for framing.`;
 }
 
+/** FNV-1a → ~uniform u in [0,1); multiplier in [3, 4.5] (stable per `id`, integer list price after round). */
+function catalogListPriceMultiplier(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const u = (h >>> 0) / 0x1_0000_0000;
+  return 3 + u * 1.5;
+}
+
 function p(
   args: Pick<
     Product,
     "id" | "title" | "priceAud" | "imageSrc" | "imageAlt" | "category"
   > & { description?: string },
 ): Product {
+  const baseAud = Math.floor(args.priceAud);
+  const mult = catalogListPriceMultiplier(args.id);
   return {
     ...args,
     description: args.description ?? defaultPhysicalDescription(args.title),
-    priceAud: Math.floor(args.priceAud),
+    priceAud: Math.max(1, Math.round(baseAud * mult)),
     formats: ["Physical print"],
     license: "personal",
   };

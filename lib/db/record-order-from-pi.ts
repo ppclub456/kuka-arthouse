@@ -3,6 +3,7 @@ import type { OrderCartLineSnapshot } from "@/lib/db/schema";
 import { orders } from "@/lib/db/schema";
 import { buildOrderContactPatchFromPaymentIntent } from "@/lib/stripe-order-contact";
 import { getOrdersDb } from "@/lib/db/client";
+import { normalizePayLinkCode } from "@/lib/db/pay-link-code";
 import { upsertCustomerForOrder } from "@/lib/db/customer-repo";
 
 function audStringToCents(raw: string | undefined): number | null {
@@ -82,10 +83,11 @@ export async function recordSucceededPaymentIntent(
   const productId =
     typeof meta.product_id === "string" ? meta.product_id : null;
 
-  const payLinkCode =
-    typeof meta.pay_link_code === "string"
-      ? meta.pay_link_code.trim().slice(0, 10)
-      : null;
+  const payLinkMeta =
+    typeof meta.pay_link_code === "string" ? meta.pay_link_code.trim() : "";
+  const payLinkCode = payLinkMeta
+    ? normalizePayLinkCode(payLinkMeta).slice(0, 16)
+    : null;
 
   const cartLines = parseCartLinesFromMeta(meta);
 

@@ -80,9 +80,23 @@ export function AdminPayLinksTable() {
         error?: string;
         message?: string;
         ok?: boolean;
+        candidates?: string[];
+        tried?: Array<{ piId: string; status: string | null; rejected?: string }>;
       };
       if (!res.ok) {
-        setError(typeof data.error === "string" ? data.error : "Reconcile failed.");
+        let line =
+          typeof data.error === "string" ? data.error : "Reconcile failed.";
+        if (Array.isArray(data.tried) && data.tried.length > 0) {
+          const bits = data.tried
+            .map((t) =>
+              `${t.piId}:${t.status ?? "?"}${t.rejected ? ` (${t.rejected})` : ""}`,
+            )
+            .join("; ");
+          line += ` Details: ${bits}`;
+        } else if (Array.isArray(data.candidates)) {
+          line += ` Tried: ${data.candidates.join(", ") || "(none)"}.`;
+        }
+        setError(line);
         return;
       }
       setReconcileMsg(typeof data.message === "string" ? data.message : "Updated.");
@@ -127,6 +141,11 @@ export function AdminPayLinksTable() {
       {warning ? (
         <p className="mt-4 text-sm font-medium text-amber-900" role="status">
           {warning}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mt-4 text-sm font-medium text-red-700" role="alert">
+          {error}
         </p>
       ) : null}
       {reconcileMsg ? (

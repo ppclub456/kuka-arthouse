@@ -26,6 +26,7 @@ function serialize(data: NonNullable<Awaited<ReturnType<typeof getCustomerByIdFo
       fullName: customer.fullName,
       phone: customer.phone,
       notes: customer.notes,
+      stripeCustomerId: customer.stripeCustomerId ?? null,
       createdAtIso: cAt,
       updatedAtIso: uAt,
     },

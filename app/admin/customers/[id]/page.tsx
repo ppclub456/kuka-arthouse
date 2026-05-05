@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AdminNav } from "@/components/admin-nav";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { AdminCustomerNotes } from "@/components/admin-customer-notes";
+import { stripeDashboardCustomerUrl } from "@/lib/stripe-dashboard-url";
 import { isPgUndefinedColumnError } from "@/lib/admin-api-params";
 import { getOrdersDb } from "@/lib/db/client";
 import { getCustomerByIdForAdmin } from "@/lib/db/order-admin-queries";
@@ -46,8 +47,9 @@ export default async function AdminCustomerDetailPage(props: Props) {
           <AdminNav />
           <p className="mt-10 font-medium text-amber-900" role="status">
             Database schema is out of date. Run{" "}
-            <code className="rounded bg-zinc-200 px-1 text-sm">drizzle/0002_customers_orders_admin.sql</code> or{" "}
-            <code className="rounded bg-zinc-200 px-1 text-sm">npm run db:push</code>.
+            <code className="rounded bg-zinc-200 px-1 text-sm">npm run db:push</code>
+            {" "}or apply <code className="rounded bg-zinc-200 px-1 text-sm">drizzle/0002_*</code> and{" "}
+            <code className="rounded bg-zinc-200 px-1 text-sm">0003_*</code>.
           </p>
           <p className="mt-4">
             <Link href="/admin/customers" className="text-sky-800 hover:underline">
@@ -96,6 +98,19 @@ export default async function AdminCustomerDetailPage(props: Props) {
         <p className="mt-1 text-sm text-zinc-600">{customer.email}</p>
         {customer.phone ? (
           <p className="mt-1 text-sm text-zinc-600">Phone: {customer.phone}</p>
+        ) : null}
+        {customer.stripeCustomerId ? (
+          <p className="mt-2 text-sm text-zinc-600">
+            Stripe:{" "}
+            <a
+              href={stripeDashboardCustomerUrl(customer.stripeCustomerId)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-xs text-sky-800 underline-offset-4 hover:underline"
+            >
+              {customer.stripeCustomerId}
+            </a>
+          </p>
         ) : null}
       </header>
 

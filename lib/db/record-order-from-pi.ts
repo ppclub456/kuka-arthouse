@@ -2,7 +2,10 @@ import type Stripe from "stripe";
 import type { OrderCartLineSnapshot } from "@/lib/db/schema";
 import { orders } from "@/lib/db/schema";
 import { getOrdersDb } from "@/lib/db/client";
-import { upsertCustomerForOrder } from "@/lib/db/customer-repo";
+import {
+  sanitizeStripeCustomerId,
+  upsertCustomerForOrder,
+} from "@/lib/db/customer-repo";
 
 function audStringToCents(raw: string | undefined): number | null {
   if (raw == null || raw === "") return null;
@@ -152,11 +155,25 @@ export async function recordSucceededPaymentIntent(
 
   const cartLines = parseCartLinesFromMeta(meta);
 
+  let stripeCustomerId: string | null = null;
+  const custRef = pi.customer;
+  if (typeof custRef === "string") {
+    stripeCustomerId = sanitizeStripeCustomerId(custRef);
+  } else if (
+    custRef &&
+    typeof custRef === "object" &&
+    !(custRef as { deleted?: boolean }).deleted &&
+    typeof (custRef as { id?: unknown }).id === "string"
+  ) {
+    stripeCustomerId = sanitizeStripeCustomerId((custRef as { id: string }).id);
+  }
+
   let customerId: number | null = null;
   try {
     customerId = await upsertCustomerForOrder(db, customerEmail, {
       fullName: shippingName ?? billingName,
       phone: shippingPhone ?? billingPhone,
+      stripeCustomerId,
     });
   } catch (e) {
     console.error("[orders] customer upsert failed:", e);

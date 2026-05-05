@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { AdminCustomerBackfillButton } from "@/components/admin-customer-backfill-button";
 import { AdminNav } from "@/components/admin-nav";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { isPgUndefinedColumnError } from "@/lib/admin-api-params";
 import { getOrdersDb } from "@/lib/db/client";
+import { stripeDashboardCustomerUrl } from "@/lib/stripe-dashboard-url";
 import { listCustomersForAdmin } from "@/lib/db/order-admin-queries";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +22,7 @@ export default async function AdminCustomersPage() {
       console.error("[admin/customers]", e);
       if (isPgUndefinedColumnError(e)) {
         schemaError =
-          "Database schema is out of date. Run drizzle/0002_customers_orders_admin.sql or npm run db:push.";
+          "Database schema is out of date. Run npm run db:push or apply drizzle/0002_customers_orders_admin.sql and drizzle/0003_customers_stripe_id.sql.";
       } else {
         throw e;
       }
@@ -47,8 +49,9 @@ export default async function AdminCustomersPage() {
             Customers
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-600">
-            Profiles are created automatically after a paying checkout when we can associate an email.
-            Use notes for lightweight CRM — this is not a customer login/account system.
+            Profiles are keyed by payer email after successful Stripe payments. New payments merge name, phone,
+            and Stripe Customer id (<span className="font-mono">cus_…</span>) automatically. Use the sync tool
+            below to attach historical orders that were missing links.
           </p>
         </div>
         <AdminLogoutButton />
@@ -62,46 +65,72 @@ export default async function AdminCustomersPage() {
         <p className="mt-10 font-medium text-amber-900" role="status">
           {schemaError}
         </p>
-      ) : rows.length === 0 ? (
-        <p className="mt-10 text-[var(--muted-foreground)]">No customers archived yet.</p>
       ) : (
-        <div className="ai-panel mt-10 overflow-x-auto rounded-sm p-6 sm:p-8">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-[var(--border-dim)] text-xs font-semibold uppercase tracking-[0.1em] text-zinc-600">
-                <th className="py-3 pr-3">Customer</th>
-                <th className="py-3 pr-3">Phone</th>
-                <th className="py-3 pr-3">Orders</th>
-                <th className="py-3 pr-3">Last order</th>
-                <th className="py-3">Profile</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((c) => (
-                <tr
-                  key={c.id}
-                  className="border-b border-[var(--border-dim)]/60 text-[var(--foreground)]"
-                >
-                  <td className="py-3 pr-3 align-top">
-                    <div className="font-medium text-zinc-900">{c.fullName ?? "—"}</div>
-                    <div className="text-zinc-600">{c.email}</div>
-                  </td>
-                  <td className="py-3 pr-3 align-top text-zinc-600">{c.phone ?? "—"}</td>
-                  <td className="py-3 pr-3 align-top tabular-nums">{c.orderCount}</td>
-                  <td className="py-3 pr-3 align-top text-zinc-600">{formatAuDate(c.lastOrderAt)}</td>
-                  <td className="py-3 align-top">
-                    <Link
-                      href={`/admin/customers/${c.id}`}
-                      className="font-semibold text-sky-800 underline-offset-4 hover:underline"
+        <>
+          <AdminCustomerBackfillButton />
+
+          {rows.length === 0 ? (
+            <p className="mt-10 text-[var(--muted-foreground)]">
+              No customer rows yet. Run &quot;Sync customers from orders&quot; above if you already have archived
+              orders with emails.
+            </p>
+          ) : (
+            <div className="ai-panel mt-8 overflow-x-auto rounded-sm p-6 sm:p-8">
+              <table className="w-full min-w-[820px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--border-dim)] text-xs font-semibold uppercase tracking-[0.1em] text-zinc-600">
+                    <th className="py-3 pr-3">Customer</th>
+                    <th className="py-3 pr-3">Phone</th>
+                    <th className="py-3 pr-3">Stripe</th>
+                    <th className="py-3 pr-3">Orders</th>
+                    <th className="py-3 pr-3">Last order</th>
+                    <th className="py-3">Profile</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((c) => (
+                    <tr
+                      key={c.id}
+                      className="border-b border-[var(--border-dim)]/60 text-[var(--foreground)]"
                     >
-                      Open
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      <td className="py-3 pr-3 align-top">
+                        <div className="font-medium text-zinc-900">{c.fullName ?? "—"}</div>
+                        <div className="text-zinc-600">{c.email}</div>
+                      </td>
+                      <td className="py-3 pr-3 align-top text-zinc-600">{c.phone ?? "—"}</td>
+                      <td className="py-3 pr-3 align-top">
+                        {c.stripeCustomerId ? (
+                          <a
+                            href={stripeDashboardCustomerUrl(c.stripeCustomerId)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-xs text-sky-800 underline-offset-4 hover:underline"
+                          >
+                            {c.stripeCustomerId.length > 22
+                              ? `${c.stripeCustomerId.slice(0, 14)}…`
+                              : c.stripeCustomerId}
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="py-3 pr-3 align-top tabular-nums">{c.orderCount}</td>
+                      <td className="py-3 pr-3 align-top text-zinc-600">{formatAuDate(c.lastOrderAt)}</td>
+                      <td className="py-3 align-top">
+                        <Link
+                          href={`/admin/customers/${c.id}`}
+                          className="font-semibold text-sky-800 underline-offset-4 hover:underline"
+                        >
+                          Open
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
 
       <p className="mt-10">

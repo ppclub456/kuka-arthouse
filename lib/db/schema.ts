@@ -30,6 +30,8 @@ export const customers = pgTable(
     phone: varchar("phone", { length: 48 }),
     /** Merchant-only CRM notes */
     notes: text("notes"),
+    /** Stripe Customer id (cus_…) when Stripe attached one to the payment */
+    stripeCustomerId: varchar("stripe_customer_id", { length: 191 }).unique(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

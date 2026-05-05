@@ -10,6 +10,14 @@ export function normalizeCustomerEmail(email: string | null | undefined): string
   return e;
 }
 
+/** Stripe Customer ids look like `cus_…` — keep ASCII trim for storage. */
+export function sanitizeStripeCustomerId(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const s = raw.trim();
+  if (!s.startsWith("cus_") || s.length < 8 || s.length > 64) return null;
+  return s.slice(0, 64);
+}
+
 function mergeText(
   current: string | null | undefined,
   incoming: string | null | undefined,
@@ -20,22 +28,34 @@ function mergeText(
   return current ?? null;
 }
 
+export type UpsertCustomerPatch = {
+  fullName?: string | null;
+  phone?: string | null;
+  stripeCustomerId?: string | null;
+};
+
 /**
- * Creates or updates a customer row; prefers filling empty name/phone with new data.
+ * Creates or updates a customer row; prefers filling empty name/phone/stripe id with new data.
  */
 export async function upsertCustomerForOrder(
   db: PostgresJsDatabase<typeof schema>,
   emailRaw: string | null | undefined,
-  patch: { fullName?: string | null; phone?: string | null },
+  patch: UpsertCustomerPatch,
 ): Promise<number | null> {
   const email = normalizeCustomerEmail(emailRaw);
   if (!email) return null;
 
   const fullName = patch.fullName?.trim().slice(0, 280) || null;
   const phone = patch.phone?.trim().slice(0, 48) || null;
+  const stripeIn = sanitizeStripeCustomerId(patch.stripeCustomerId);
 
   const existing = await db
-    .select({ id: customers.id, fullName: customers.fullName, phone: customers.phone })
+    .select({
+      id: customers.id,
+      fullName: customers.fullName,
+      phone: customers.phone,
+      stripeCustomerId: customers.stripeCustomerId,
+    })
     .from(customers)
     .where(eq(customers.email, email))
     .limit(1);
@@ -45,14 +65,22 @@ export async function upsertCustomerForOrder(
   if (existing[0]) {
     const nextName = mergeText(existing[0].fullName, fullName, 280);
     const nextPhone = mergeText(existing[0].phone, phone, 48);
+    const existingStripe = sanitizeStripeCustomerId(
+      existing[0].stripeCustomerId ?? undefined,
+    );
+    const nextStripe =
+      existingStripe ?? stripeIn ?? null;
+
     await db
       .update(customers)
       .set({
         fullName: nextName,
         phone: nextPhone,
+        stripeCustomerId: nextStripe,
         updatedAt: now,
       })
       .where(eq(customers.id, existing[0].id));
+
     return existing[0].id;
   }
 
@@ -62,6 +90,7 @@ export async function upsertCustomerForOrder(
       email,
       fullName,
       phone,
+      stripeCustomerId: stripeIn ?? null,
       updatedAt: now,
     })
     .returning({ id: customers.id });

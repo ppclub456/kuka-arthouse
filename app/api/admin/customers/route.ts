@@ -27,11 +27,12 @@ export async function GET(request: Request) {
     return NextResponse.json({
       rows: rows.map((r) => ({
         id: r.id,
-        email: r.email,
-        fullName: r.fullName,
-        phone: r.phone,
-        notes: r.notes,
-        createdAtIso: r.createdAt.toISOString(),
+      email: r.email,
+      fullName: r.fullName,
+      phone: r.phone,
+      notes: r.notes,
+      stripeCustomerId: r.stripeCustomerId,
+      createdAtIso: r.createdAt.toISOString(),
         updatedAtIso: r.updatedAt.toISOString(),
         orderCount: r.orderCount,
         lastOrderAtIso: r.lastOrderAt?.toISOString() ?? null,

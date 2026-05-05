@@ -160,6 +160,7 @@ export type AdminCustomerSummary = {
   fullName: string | null;
   phone: string | null;
   notes: string | null;
+  stripeCustomerId: string | null;
   createdAt: Date;
   updatedAt: Date;
   orderCount: number;
@@ -202,6 +203,7 @@ export async function listCustomersForAdmin(limit = 200): Promise<AdminCustomerS
       fullName: c.fullName,
       phone: c.phone,
       notes: c.notes,
+      stripeCustomerId: c.stripeCustomerId ?? null,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
       orderCount: aggRow?.n ?? 0,

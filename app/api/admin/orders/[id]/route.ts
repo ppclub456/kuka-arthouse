@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { orders } from "@/lib/db/schema";
 import { getOrdersDb } from "@/lib/db/client";
+import { isPgUndefinedColumnError, parseRouteIdParam } from "@/lib/admin-api-params";
 import { getOrderByIdForAdmin } from "@/lib/db/order-admin-queries";
 import { requireAdminOr401 } from "@/lib/require-admin-session";
 
@@ -17,10 +18,15 @@ const FULFILL = new Set([
 
 function serializeOrderDetail(data: NonNullable<Awaited<ReturnType<typeof getOrderByIdForAdmin>>>) {
   const { order, customer } = data;
+  const createdAt =
+    order.createdAt instanceof Date
+      ? order.createdAt.toISOString()
+      : new Date(order.createdAt as unknown as string).toISOString();
+
   return {
     order: {
       id: order.id,
-      createdAtIso: order.createdAt.toISOString(),
+      createdAtIso: createdAt,
       stripePaymentIntentId: order.stripePaymentIntentId,
       stripeChargeId: order.stripeChargeId,
       amountAud: (order.amountAudCents / 100).toFixed(2),
@@ -55,7 +61,7 @@ function serializeOrderDetail(data: NonNullable<Awaited<ReturnType<typeof getOrd
       billingCity: order.billingCity,
       billingPostal: order.billingPostal,
       billingCountry: order.billingCountry,
-      cartLines: order.cartLines,
+      cartLines: normalizeCartLines(order.cartLines),
     },
     customer: customer
       ? {
@@ -69,28 +75,71 @@ function serializeOrderDetail(data: NonNullable<Awaited<ReturnType<typeof getOrd
   };
 }
 
+function normalizeCartLines(raw: unknown) {
+  if (!raw || !Array.isArray(raw)) return null;
+  const out: Array<{
+    productId: string;
+    title: string;
+    quantity: number;
+    unitAud: number;
+    lineTotalAud: number;
+  }> = [];
+  for (const x of raw) {
+    if (!x || typeof x !== "object") continue;
+    const o = x as Record<string, unknown>;
+    out.push({
+      productId: String(o.productId ?? ""),
+      title: String(o.title ?? ""),
+      quantity: Number(o.quantity) || 0,
+      unitAud: Number(o.unitAud) || 0,
+      lineTotalAud: Number(o.lineTotalAud) || 0,
+    });
+  }
+  return out.length > 0 ? out : null;
+}
+
 export async function GET(
   _request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params?: Promise<Record<string, string | string[] | undefined>> },
 ) {
   const denied = await requireAdminOr401();
   if (denied) return denied;
 
-  const { id } = await ctx.params;
-  const num = Number.parseInt(id, 10);
-  if (!Number.isFinite(num)) {
+  const db = getOrdersDb();
+  if (!db) {
+    return NextResponse.json(
+      { error: "Database is not configured. Set DATABASE_URL on the server." },
+      { status: 503 },
+    );
+  }
+
+  const num = await parseRouteIdParam(ctx);
+  if (num == null) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
-  const data = await getOrderByIdForAdmin(num);
-  if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  return NextResponse.json(serializeOrderDetail(data));
+  try {
+    const data = await getOrderByIdForAdmin(num);
+    if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(serializeOrderDetail(data));
+  } catch (e) {
+    console.error("[api/admin/orders/[id]] GET", e);
+    if (isPgUndefinedColumnError(e)) {
+      return NextResponse.json(
+        {
+          error:
+            "Database is missing new columns. Run migration: drizzle/0002_customers_orders_admin.sql or npm run db:push",
+        },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json({ error: "Could not load order." }, { status: 500 });
+  }
 }
 
 export async function PATCH(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params?: Promise<Record<string, string | string[] | undefined>> },
 ) {
   const denied = await requireAdminOr401();
   if (denied) return denied;
@@ -100,9 +149,8 @@ export async function PATCH(
     return NextResponse.json({ error: "DATABASE_URL not configured." }, { status: 503 });
   }
 
-  const { id } = await ctx.params;
-  const num = Number.parseInt(id, 10);
-  if (!Number.isFinite(num)) {
+  const num = await parseRouteIdParam(ctx);
+  if (num == null) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
@@ -131,13 +179,27 @@ export async function PATCH(
     return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
   }
 
-  const updated = await db.update(orders).set(patch).where(eq(orders.id, num)).returning({
-    id: orders.id,
-  });
+  try {
+    const updated = await db.update(orders).set(patch).where(eq(orders.id, num)).returning({
+      id: orders.id,
+    });
 
-  if (!updated.length) {
-    return NextResponse.json({ error: "Order not found." }, { status: 404 });
+    if (!updated.length) {
+      return NextResponse.json({ error: "Order not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("[api/admin/orders/[id]] PATCH", e);
+    if (isPgUndefinedColumnError(e)) {
+      return NextResponse.json(
+        {
+          error:
+            "Database is missing new columns. Run migration: drizzle/0002_customers_orders_admin.sql or npm run db:push",
+        },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json({ error: "Could not update order." }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true });
 }

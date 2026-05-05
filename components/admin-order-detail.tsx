@@ -89,7 +89,12 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
         setData(null);
         return;
       }
-      setData(body);
+      if (!body.order) {
+        setError("Invalid response from server.");
+        setData(null);
+        return;
+      }
+      setData(body as DetailPayload);
       setStatus(body.order.fulfillmentStatus ?? "unfulfilled");
       setNote(body.order.internalNote ?? "");
     } catch {

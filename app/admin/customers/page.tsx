@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminNav } from "@/components/admin-nav";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
+import { isPgUndefinedColumnError } from "@/lib/admin-api-params";
 import { getOrdersDb } from "@/lib/db/client";
 import { listCustomersForAdmin } from "@/lib/db/order-admin-queries";
 
@@ -8,7 +9,23 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminCustomersPage() {
   const db = getOrdersDb();
-  const rows = db ? await listCustomersForAdmin(300) : [];
+
+  let rows: Awaited<ReturnType<typeof listCustomersForAdmin>> = [];
+  let schemaError: string | null = null;
+
+  if (db) {
+    try {
+      rows = await listCustomersForAdmin(300);
+    } catch (e) {
+      console.error("[admin/customers]", e);
+      if (isPgUndefinedColumnError(e)) {
+        schemaError =
+          "Database schema is out of date. Run drizzle/0002_customers_orders_admin.sql or npm run db:push.";
+      } else {
+        throw e;
+      }
+    }
+  }
 
   function formatAuDate(d: Date | null) {
     if (!d) return "—";
@@ -40,6 +57,10 @@ export default async function AdminCustomersPage() {
       {!db ? (
         <p className="mt-10 font-medium text-amber-900" role="status">
           DATABASE_URL is not set — customer list needs Postgres.
+        </p>
+      ) : schemaError ? (
+        <p className="mt-10 font-medium text-amber-900" role="status">
+          {schemaError}
         </p>
       ) : rows.length === 0 ? (
         <p className="mt-10 text-[var(--muted-foreground)]">No customers archived yet.</p>

@@ -6,12 +6,14 @@ import { AdminOrderDetail } from "@/components/admin-order-detail";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = { params?: Promise<{ id?: string | string[] }> };
 
 export default async function AdminOrderDetailPage(props: Props) {
-  const { id } = await props.params;
-  const num = Number.parseInt(id, 10);
-  if (!Number.isFinite(num)) notFound();
+  const p = (await props.params) ?? {};
+  const raw = p.id;
+  const idStr = Array.isArray(raw) ? raw[0] : raw;
+  const num = typeof idStr === "string" ? Number.parseInt(idStr.trim(), 10) : NaN;
+  if (!Number.isFinite(num) || num < 1) notFound();
 
   return (
     <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-16 sm:px-6">

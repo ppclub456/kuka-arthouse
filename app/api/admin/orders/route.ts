@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isPgUndefinedColumnError } from "@/lib/admin-api-params";
 import { getOrdersDb } from "@/lib/db/client";
 import { listOrdersForAdmin } from "@/lib/db/order-admin-queries";
 import { requireAdminOr401 } from "@/lib/require-admin-session";
@@ -65,12 +66,30 @@ export async function GET(request: Request) {
   const limitRaw = url.searchParams.get("limit");
   const limit = limitRaw ? Number.parseInt(limitRaw, 10) : 200;
 
-  const rows = await listOrdersForAdmin({
-    q,
-    limit: Number.isFinite(limit) ? limit : 200,
-  });
+  try {
+    const rows = await listOrdersForAdmin({
+      q,
+      limit: Number.isFinite(limit) ? limit : 200,
+    });
 
-  return NextResponse.json({
-    rows: rows.map(serializeRow),
-  });
+    return NextResponse.json({
+      rows: rows.map(serializeRow),
+    });
+  } catch (e) {
+    console.error("[api/admin/orders] GET", e);
+    if (isPgUndefinedColumnError(e)) {
+      return NextResponse.json(
+        {
+          rows: [],
+          error:
+            "Database is missing new columns. Run: drizzle/0002_customers_orders_admin.sql or npm run db:push",
+        },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json(
+      { rows: [], error: "Could not load orders." },
+      { status: 500 },
+    );
+  }
 }

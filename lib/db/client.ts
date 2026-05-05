@@ -1,13 +1,14 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { normalizeDatabaseUrl } from "@/lib/db/normalize-database-url";
 import * as schema from "@/lib/db/schema";
 
 let client: postgres.Sql | null = null;
-let drizzleInstance: ReturnType<typeof drizzle> | null = null;
+let drizzleInstance: PostgresJsDatabase<typeof schema> | null = null;
 
 /** PostgreSQL URL (Neon / Supabase / Railway / RDS / local). Omit to skip DB archiving. */
-export function getOrdersDb(): ReturnType<typeof drizzle> | null {
+export function getOrdersDb(): PostgresJsDatabase<typeof schema> | null {
   const url = normalizeDatabaseUrl(process.env.DATABASE_URL);
   if (!url) return null;
   if (!drizzleInstance) {

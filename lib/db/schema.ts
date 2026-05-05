@@ -1,13 +1,46 @@
 import {
   index,
   integer,
+  jsonb,
   pgTable,
   serial,
+  text,
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
 
-/** Successful (or captured) payments worth fulfilling — keyed by Stripe PaymentIntent. */
+/** Shopify-style cart line snapshot stored on payment success. */
+export type OrderCartLineSnapshot = {
+  productId: string;
+  title: string;
+  quantity: number;
+  unitAud: number;
+  lineTotalAud: number;
+};
+
+/**
+ * Canonical buyer profile keyed by normalized email — linked from archived orders after payment.
+ */
+export const customers = pgTable(
+  "customers",
+  {
+    id: serial("id").primaryKey(),
+    email: varchar("email", { length: 320 }).notNull().unique(),
+    fullName: varchar("full_name", { length: 280 }),
+    phone: varchar("phone", { length: 48 }),
+    /** Merchant-only CRM notes */
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index("customers_created_at_idx").on(t.createdAt)],
+);
+
+/** Successful payments worth fulfilling — keyed by Stripe PaymentIntent. */
 export const orders = pgTable(
   "orders",
   {
@@ -31,13 +64,41 @@ export const orders = pgTable(
     customerEmail: varchar("customer_email", { length: 320 }),
     productId: varchar("product_id", { length: 100 }),
     receiptUrl: varchar("receipt_url", { length: 1200 }),
-    /** Store-cart snapshot from PI metadata when present */
     subtotalAudCents: integer("subtotal_aud_cents"),
     tipAudCents: integer("tip_aud_cents"),
     shippingAudCents: integer("shipping_aud_cents"),
     lineCount: integer("line_count"),
+    customerId: integer("customer_id").references(() => customers.id, {
+      onDelete: "set null",
+    }),
+    /** unfulfilled | processing | fulfilled | cancelled | refunded */
+    fulfillmentStatus: varchar("fulfillment_status", { length: 48 }).default(
+      "unfulfilled",
+    ),
+    /** Staff-only memo */
+    internalNote: text("internal_note"),
+    payLinkCode: varchar("pay_link_code", { length: 16 }),
+    shippingName: varchar("shipping_name", { length: 240 }),
+    shippingPhone: varchar("shipping_phone", { length: 48 }),
+    shippingLine1: varchar("shipping_line1", { length: 280 }),
+    shippingLine2: varchar("shipping_line2", { length: 280 }),
+    shippingCity: varchar("shipping_city", { length: 120 }),
+    shippingPostal: varchar("shipping_postal", { length: 48 }),
+    shippingCountry: varchar("shipping_country", { length: 24 }),
+    billingName: varchar("billing_name", { length: 240 }),
+    billingPhone: varchar("billing_phone", { length: 48 }),
+    billingLine1: varchar("billing_line1", { length: 280 }),
+    billingLine2: varchar("billing_line2", { length: 280 }),
+    billingCity: varchar("billing_city", { length: 120 }),
+    billingPostal: varchar("billing_postal", { length: 48 }),
+    billingCountry: varchar("billing_country", { length: 24 }),
+    cartLines: jsonb("cart_lines").$type<OrderCartLineSnapshot[] | null>(),
   },
-  (t) => [index("orders_created_at_desc_idx").on(t.createdAt)],
+  (t) => [
+    index("orders_created_at_desc_idx").on(t.createdAt),
+    index("orders_customer_id_idx").on(t.customerId),
+    index("orders_fulfillment_status_idx").on(t.fulfillmentStatus),
+  ],
 );
 
 /**
@@ -56,7 +117,6 @@ export const payLinks = pgTable(
       .defaultNow()
       .notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-    /** Latest PI tied to billing step (may supersede orphans) */
     stripePaymentIntentId: varchar("stripe_payment_intent_id", {
       length: 191,
     }).unique(),

@@ -74,6 +74,18 @@ export function CheckoutForm() {
   async function handleProceedToPayment() {
     setPayError("");
     setEmbedPayment(null);
+    if (
+      !email.trim().includes("@") ||
+      firstName.trim().length < 1 ||
+      lastName.trim().length < 1 ||
+      street.trim().length < 4 ||
+      city.trim().length < 2
+    ) {
+      setPayError(
+        "Please complete contact & shipping: email, first & last name, street address, and city.",
+      );
+      return;
+    }
     setPayPending(true);
     try {
       const res = await fetch("/api/stripe/create-payment-intent", {
@@ -86,6 +98,15 @@ export function CheckoutForm() {
           })),
           tipAmountAud: tipAmount,
           customerEmail: email.trim(),
+          customer: {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            phone: phone.trim(),
+            street: street.trim(),
+            city: city.trim(),
+            postal: postal.trim(),
+            countryLabel: country,
+          },
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {

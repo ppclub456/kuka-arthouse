@@ -187,7 +187,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      message: "Pay link marked paid.",
+      message: "Payment order link marked paid.",
       paidAtIso: after.paidAt.toISOString(),
       stripePaymentIntentId: after.stripePaymentIntentId ?? pi.id,
       triedStripeIntentIds: tried.map((t) => t.piId),

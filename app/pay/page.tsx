@@ -140,7 +140,7 @@ export default async function PayLinkPage({ searchParams }: Props) {
           Pay · Kuka Arthouse
         </p>
         <h1 className="mt-4 text-lg font-semibold text-[var(--foreground)]">
-          Secure payment · code {offer.code}
+          Secure checkout · order {offer.code}
         </h1>
         <PaySecureTrustStrip className="mt-4" />
 
@@ -195,10 +195,10 @@ export default async function PayLinkPage({ searchParams }: Props) {
         amount: Math.round(claims.amountAud * 100),
         currency: "aud",
         automatic_payment_methods: { enabled: true },
-        description: claims.title.slice(0, 200),
+        description: claims.title.trim().slice(0, 200) || "Kuka Arthouse order",
         metadata: {
-          checkout_kind: "admin_link",
-          admin_mode: claims.mode,
+          checkout_kind: "customer_order",
+          order_flow: claims.mode,
           ...(claims.productId ? { product_id: claims.productId } : {}),
           ...(claims.reference
             ? { payment_reference: claims.reference.slice(0, 40) }

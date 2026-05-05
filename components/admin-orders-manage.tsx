@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { orderChannelAdminLabel } from "@/lib/order-channel-label";
 
 /** Mini summary for dashboard / quick lists */
 export type OrderListRowApi = {
@@ -27,12 +28,6 @@ export type OrderListRowApi = {
   fulfillmentStatus: string | null;
   payLinkCode: string | null;
 };
-
-function channelLabel(kind: string | null) {
-  if (kind === "store") return "Store";
-  if (kind === "admin_link") return "Payment link";
-  return kind ?? "—";
-}
 
 function fulfillBadge(status: string | null) {
   const s = (status ?? "unfulfilled").toLowerCase();
@@ -125,7 +120,7 @@ export function AdminOrdersManage({ initialRows = [], initialWarning = "" }: Pro
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search email, reference, memo, payment link code, intent ID…"
+          placeholder="Search email, reference, memo, pay order code, intent ID…"
           className="w-full flex-1 rounded-sm border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400"
         />
         <button
@@ -186,7 +181,7 @@ export function AdminOrdersManage({ initialRows = [], initialWarning = "" }: Pro
                     </span>
                   </td>
                   <td className="py-3 pr-3 align-top">
-                    {channelLabel(r.checkoutKind)}
+                    {orderChannelAdminLabel(r.checkoutKind)}
                     {r.adminMode ? (
                       <span className="mt-0.5 block text-xs text-zinc-500">{r.adminMode}</span>
                     ) : null}

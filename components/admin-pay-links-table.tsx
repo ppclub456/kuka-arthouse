@@ -47,7 +47,7 @@ export function AdminPayLinksTable() {
         error?: string;
       };
       if (!res.ok) {
-        setError(data.error ?? "Could not load payment links.");
+        setError(data.error ?? "Could not load payment order links.");
         setRows([]);
         return;
       }
@@ -125,7 +125,7 @@ export function AdminPayLinksTable() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold uppercase tracking-[0.2em] text-zinc-900 sm:text-lg">
-            Payment links
+            Payment orders issued (short codes)
           </h2>
         </div>
         <button
@@ -158,7 +158,7 @@ export function AdminPayLinksTable() {
         <p className="mt-6 text-base text-[var(--muted-foreground)]">Loading…</p>
       ) : rows.length === 0 ? (
         <p className="mt-6 text-base text-[var(--muted-foreground)]">
-          No payment links yet.
+          No payment order links yet.
         </p>
       ) : (
         <div className="mt-6 overflow-x-auto">

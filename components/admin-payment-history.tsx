@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { orderChannelAdminLabel } from "@/lib/order-channel-label";
 
 type PaymentRow = {
   id: string;
@@ -66,9 +67,8 @@ export function AdminPaymentHistory() {
   }
 
   function kindLabel(k: string) {
-    if (k === "store") return "Store cart";
-    if (k === "admin_link") return "Admin link";
-    return k;
+    if (!k || k === "unknown") return "—";
+    return orderChannelAdminLabel(k);
   }
 
   return (

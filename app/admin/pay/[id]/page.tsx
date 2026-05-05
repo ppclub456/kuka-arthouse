@@ -8,10 +8,11 @@ export default function LegacyAdminPayPage() {
         Retired link
       </p>
       <h1 className="mt-4 text-xl font-semibold text-[var(--foreground)] sm:text-2xl">
-        Use payment links from the dashboard
+        Use payment order links from the Admin dashboard
       </h1>
       <p className="mt-4 text-base leading-relaxed text-[var(--muted-foreground)]">
-        Sign in at admin, generate a link, customers pay on <span className="font-mono text-sm">/pay</span>.
+        Sign in at Admin, generate a payment order link · customers pay on{" "}
+        <span className="font-mono text-sm">/pay</span>.
       </p>
       <div className="mx-auto mt-10 flex flex-wrap items-center justify-center gap-4">
         <Link

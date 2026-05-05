@@ -68,7 +68,11 @@ export async function recordSucceededPaymentIntent(
   const checkoutKind =
     typeof meta.checkout_kind === "string" ? meta.checkout_kind : null;
   const adminMode =
-    typeof meta.admin_mode === "string" ? meta.admin_mode : null;
+    typeof meta.order_flow === "string"
+      ? meta.order_flow.slice(0, 48)
+      : typeof meta.admin_mode === "string"
+        ? meta.admin_mode.slice(0, 48)
+        : null;
   const title =
     (typeof pi.description === "string" && pi.description
       ? pi.description

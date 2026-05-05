@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { orderChannelAdminLabel } from "@/lib/order-channel-label";
 
 export type ArchivedOrderRow = {
   id: number;
@@ -23,11 +24,6 @@ export type ArchivedOrderRow = {
   lineCount: number | null;
 };
 
-function channelLabel(kind: string | null) {
-  if (kind === "store") return "Store checkout";
-  if (kind === "admin_link") return "Payment link";
-  return kind ?? "—";
-}
 
 export function AdminOrderArchive() {
   const [rows, setRows] = useState<ArchivedOrderRow[]>([]);
@@ -136,10 +132,10 @@ export function AdminOrderArchive() {
                     {formatAuDate(r.createdAtIso)}
                   </td>
                   <td className="py-3 pr-3 align-top">
-                    {channelLabel(r.checkoutKind)}
+                    {orderChannelAdminLabel(r.checkoutKind)}
                     {r.adminMode ? (
                       <span className="mt-0.5 block text-xs text-zinc-500">
-                        Mode: {r.adminMode}
+                        Quote: {r.adminMode}
                       </span>
                     ) : null}
                   </td>

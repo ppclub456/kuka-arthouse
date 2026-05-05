@@ -104,7 +104,7 @@ export const orders = pgTable(
 );
 
 /**
- * Issued payment links — short `code` in URL (?p=CODE). Tracks views & paid timestamp.
+ * Issued merchant payment-order links — short `code` in URL (?p=CODE). Tracks views & paid timestamp.
  */
 export const payLinks = pgTable(
   "pay_links",

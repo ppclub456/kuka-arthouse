@@ -14,7 +14,7 @@ export default function AdminOrdersPage() {
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-600">
             Archived from successful Stripe payments. Update fulfillment status and staff notes —
-            shoppers who pay from the storefront or payment links appear here once the webhook fires.
+            storefront or merchant-issued payment order links appear here once the webhook fires.
           </p>
         </div>
         <AdminLogoutButton />

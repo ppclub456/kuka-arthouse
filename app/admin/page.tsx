@@ -19,7 +19,8 @@ export default function AdminPage() {
             Dashboard
           </h1>
           <p className="mt-2 max-w-xl text-sm text-zinc-600">
-            Manage payment links, archived Stripe activity, orders, and customer notes from checkout.
+            Manage payment order links and review archived Stripe checks. Successful storefront and linked
+            checkouts sync into Orders when the webhook runs.
           </p>
         </div>
         <AdminLogoutButton />

@@ -133,9 +133,13 @@ export async function POST(request: Request) {
     }
   }
 
+  const stripeDescription = offer.title.trim().slice(0, 200) || "Kuka Arthouse order";
+
   const metaBase: Record<string, string> = {
-    checkout_kind: "admin_link",
-    admin_mode: offer.mode.slice(0, 48),
+    /** Merchant-issued checkout URL; Stripe sees this as a normal customer checkout, not an “admin tool”. */
+    checkout_kind: "customer_order",
+    /** invoice | catalog | custom — how the quote was built (internal). */
+    order_flow: offer.mode.slice(0, 48),
     pay_link_code: offer.code,
     billing_same_as_shipping: billingSameAsShipping ? "true" : "false",
     shipping_name: shippingName.slice(0, 120),
@@ -173,7 +177,7 @@ export async function POST(request: Request) {
 
         const updated = await stripe.paymentIntents.update(ex.id, {
           receipt_email: email,
-          description: offer.title.slice(0, 200),
+          description: stripeDescription,
           metadata: mergedMeta,
           shipping: {
             name: shippingName,
@@ -201,7 +205,7 @@ export async function POST(request: Request) {
       currency: "aud",
       receipt_email: email,
       automatic_payment_methods: { enabled: true },
-      description: offer.title.slice(0, 200),
+      description: stripeDescription,
       metadata: metaBase,
       shipping: {
         name: shippingName,

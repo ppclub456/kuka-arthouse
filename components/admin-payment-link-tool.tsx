@@ -96,7 +96,7 @@ export function AdminPaymentLinkTool() {
       };
 
       if (!res.ok) {
-        setGenError(data.error ?? "Could not issue payment link.");
+        setGenError(data.error ?? "Could not create payment order link.");
         return;
       }
 
@@ -120,8 +120,14 @@ export function AdminPaymentLinkTool() {
   return (
     <div className="ai-panel rounded-sm p-6 sm:p-8">
       <h2 className="text-base font-semibold uppercase tracking-[0.2em] text-zinc-900 sm:text-lg">
-        Payment link
+        Payment order link
       </h2>
+
+      <p className="mt-3 max-w-xl text-sm text-zinc-600">
+        Creates a checkout customers open on-site. In Stripe metadata this is flagged as{" "}
+        <span className="font-mono text-xs">customer_order</span> — like a shopper placing an order —
+        not an internal tool label.
+      </p>
 
       <div className="mt-6">
         <label
@@ -355,7 +361,7 @@ export function AdminPaymentLinkTool() {
           onClick={() => void handleGenerate()}
           className="moa-cta w-full py-3.5 text-sm font-semibold uppercase tracking-[0.18em] disabled:opacity-60 sm:w-auto sm:px-8"
         >
-          {genPending ? "Generating link…" : "Generate on-site payment link"}
+          {genPending ? "Generating…" : "Generate payment order link"}
         </button>
       </div>
 
@@ -365,7 +371,7 @@ export function AdminPaymentLinkTool() {
             htmlFor="link-out"
             className="text-sm font-medium uppercase tracking-wide text-zinc-700"
           >
-            On-site payment URL (share with customer)
+            Payment order URL (share with customer)
           </label>
           <textarea
             id="link-out"

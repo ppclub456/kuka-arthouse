@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { orderChannelAdminLabel } from "@/lib/order-channel-label";
 import { useCallback, useEffect, useState } from "react";
 
 type CartLineSnapshot = {
@@ -259,17 +260,11 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
           <dl className="mt-4 space-y-2 text-sm text-zinc-800">
             <div className="flex justify-between gap-4">
               <dt className="text-zinc-500">Channel</dt>
-              <dd>
-                {o.checkoutKind === "store"
-                  ? "Store"
-                  : o.checkoutKind === "admin_link"
-                    ? "Payment link"
-                    : (o.checkoutKind ?? "—")}
-              </dd>
+              <dd>{orderChannelAdminLabel(o.checkoutKind)}</dd>
             </div>
             {o.adminMode ? (
               <div className="flex justify-between gap-4">
-                <dt className="text-zinc-500">Link mode</dt>
+                <dt className="text-zinc-500">Quote type</dt>
                 <dd>{o.adminMode}</dd>
               </div>
             ) : null}

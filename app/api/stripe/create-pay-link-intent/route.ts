@@ -187,6 +187,7 @@ export async function POST(request: Request) {
           },
         });
         if (updated.client_secret) {
+          await attachPayLinkStripeIntent(offer.code, updated.id);
           return NextResponse.json({
             clientSecret: updated.client_secret,
             publishableKey: pk,

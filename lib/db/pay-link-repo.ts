@@ -110,12 +110,48 @@ export async function attachPayLinkStripeIntent(
 export async function markPayLinkPaidFromPaymentIntent(pi: Stripe.PaymentIntent) {
   const db = getOrdersDb();
   if (!db) return;
-  await db
+  if (pi.status !== "succeeded") return;
+
+  const now = new Date();
+
+  const byIntent = await db
     .update(payLinks)
-    .set({ paidAt: new Date() })
-    .where(
-      and(eq(payLinks.stripePaymentIntentId, pi.id), isNull(payLinks.paidAt)),
+    .set({ paidAt: now })
+    .where(and(eq(payLinks.stripePaymentIntentId, pi.id), isNull(payLinks.paidAt)))
+    .returning({ code: payLinks.code });
+
+  if (byIntent.length > 0) return;
+
+  const metaCode = pi.metadata?.pay_link_code;
+  const codeNorm =
+    typeof metaCode === "string" && metaCode.trim()
+      ? normalizePayLinkCode(metaCode)
+      : null;
+
+  if (!codeNorm) {
+    console.warn(
+      "[pay_links] succeeded PI did not match a pay_link row by id and has no metadata.pay_link_code:",
+      pi.id,
     );
+    return;
+  }
+
+  const byCode = await db
+    .update(payLinks)
+    .set({
+      paidAt: now,
+      stripePaymentIntentId: pi.id,
+    })
+    .where(and(eq(payLinks.code, codeNorm), isNull(payLinks.paidAt)))
+    .returning({ code: payLinks.code });
+
+  if (byCode.length === 0) {
+    console.warn(
+      "[pay_links] succeeded PI matched no unpaid row by stripePaymentIntentId or code:",
+      pi.id,
+      codeNorm,
+    );
+  }
 }
 
 /** Admin list ordered by issuance time desc. */

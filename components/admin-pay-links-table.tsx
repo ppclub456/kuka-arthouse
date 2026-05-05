@@ -33,6 +33,8 @@ export function AdminPayLinksTable() {
   const [warning, setWarning] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [reconciling, setReconciling] = useState<string | null>(null);
+  const [reconcileMsg, setReconcileMsg] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,6 +64,35 @@ export function AdminPayLinksTable() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function reconcilePayLink(code: string) {
+    setReconciling(code);
+    setReconcileMsg("");
+    setError("");
+    try {
+      const res = await fetch("/api/admin/pay-links/reconcile", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+        ok?: boolean;
+      };
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "Reconcile failed.");
+        return;
+      }
+      setReconcileMsg(typeof data.message === "string" ? data.message : "Updated.");
+      void load();
+    } catch {
+      setError("Network error.");
+    } finally {
+      setReconciling(null);
+    }
+  }
 
   function fmt(iso: string | null) {
     if (!iso) return "—";
@@ -98,9 +129,9 @@ export function AdminPayLinksTable() {
           {warning}
         </p>
       ) : null}
-      {error ? (
-        <p className="mt-4 text-sm font-medium text-red-700" role="alert">
-          {error}
+      {reconcileMsg ? (
+        <p className="mt-2 text-sm font-medium text-emerald-800" role="status">
+          {reconcileMsg}
         </p>
       ) : null}
 
@@ -112,7 +143,7 @@ export function AdminPayLinksTable() {
         </p>
       ) : (
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[960px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[1040px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--border-dim)] text-xs font-semibold uppercase tracking-[0.1em] text-zinc-600">
                 <th className="py-3 pr-3">Code</th>
@@ -123,7 +154,8 @@ export function AdminPayLinksTable() {
                 <th className="py-3 pr-3">AUD</th>
                 <th className="py-3 pr-3">Reference</th>
                 <th className="py-3 pr-3">Memo</th>
-                <th className="py-3">Intent</th>
+                <th className="py-3 pr-3">Intent</th>
+                <th className="py-3">Sync</th>
               </tr>
             </thead>
             <tbody>
@@ -160,6 +192,18 @@ export function AdminPayLinksTable() {
                       </td>
                       <td className="py-3 align-top font-mono text-xs text-zinc-500">
                         {r.stripePaymentIntentId ?? "—"}
+                      </td>
+                      <td className="py-3 align-top">
+                        {!r.paidAt ? (
+                          <button
+                            type="button"
+                            disabled={reconciling === r.code}
+                            onClick={() => void reconcilePayLink(r.code)}
+                            className="text-left text-xs font-semibold uppercase tracking-[0.08em] text-sky-800 underline-offset-2 hover:underline disabled:opacity-50"
+                          >
+                            {reconciling === r.code ? "…" : "Mark paid"}
+                          </button>
+                        ) : null}
                       </td>
                     </tr>
                   );

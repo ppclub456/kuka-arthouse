@@ -74,6 +74,8 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState("");
 
   const [status, setStatus] = useState("unfulfilled");
   const [note, setNote] = useState("");
@@ -135,6 +137,29 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
     }
   }
 
+  async function handleSyncStripe() {
+    setSyncing(true);
+    setSyncMsg("");
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/sync-stripe`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const body = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+      if (!res.ok) {
+        setError(typeof body.error === "string" ? body.error : "Sync failed.");
+        return;
+      }
+      setSyncMsg(typeof body.message === "string" ? body.message : "Synced from Stripe.");
+      void load();
+    } catch {
+      setError("Network error.");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   const stripeUrl = () => {
     const pk = (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "").toLowerCase();
     const test = pk.includes("test") || process.env.NODE_ENV !== "production";
@@ -183,7 +208,8 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
             Stripe: <span className="font-mono text-xs">{o.stripePaymentIntentId}</span>
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col items-stretch gap-2 sm:items-end">
+          <div className="flex flex-wrap gap-2">
           {o.customerId ? (
             <Link
               href={`/admin/customers/${o.customerId}`}
@@ -200,6 +226,14 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
           >
             Open in Stripe
           </a>
+          <button
+            type="button"
+            onClick={() => void handleSyncStripe()}
+            disabled={syncing}
+            className="rounded-sm border border-sky-300 bg-sky-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-sky-900 hover:bg-sky-100 disabled:opacity-50"
+          >
+            {syncing ? "Syncing…" : "Sync from Stripe"}
+          </button>
           {o.receiptUrl ? (
             <a
               href={o.receiptUrl}
@@ -209,6 +243,10 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
             >
               Receipt
             </a>
+          ) : null}
+          </div>
+          {syncMsg ? (
+            <p className="text-xs font-medium text-emerald-800 sm:text-right">{syncMsg}</p>
           ) : null}
         </div>
       </div>

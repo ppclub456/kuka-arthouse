@@ -120,7 +120,7 @@ export function AdminOrdersManage({ initialRows = [], initialWarning = "" }: Pro
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search email, reference, memo, pay order code, intent ID…"
+          placeholder="Search email, order number, product, pay order code, intent ID…"
           className="w-full flex-1 rounded-sm border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400"
         />
         <button
@@ -156,8 +156,8 @@ export function AdminOrdersManage({ initialRows = [], initialWarning = "" }: Pro
                 <th className="py-3 pr-3">Fulfillment</th>
                 <th className="py-3 pr-3">Channel</th>
                 <th className="py-3 pr-3">Customer</th>
-                <th className="py-3 pr-3">Reference</th>
-                <th className="py-3 pr-3">Memo</th>
+                <th className="py-3 pr-3">Order number</th>
+                <th className="py-3 pr-3">Product</th>
                 <th className="py-3 pr-3">Amount</th>
                 <th className="py-3">Detail</th>
               </tr>

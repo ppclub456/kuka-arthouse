@@ -134,7 +134,7 @@ export function AdminPaymentLinkTool() {
           htmlFor="pay-ref"
           className="text-sm font-medium uppercase tracking-wide text-zinc-700"
         >
-          Order / payment reference (optional · shown on pay page)
+          Order number (optional · shown on pay page)
         </label>
         <input
           id="pay-ref"
@@ -192,7 +192,7 @@ export function AdminPaymentLinkTool() {
                 htmlFor="inv-title"
                 className="text-sm font-medium uppercase tracking-wide text-zinc-700"
               >
-                Customer-facing title / memo
+                Customer-facing product title
               </label>
               <input
                 id="inv-title"

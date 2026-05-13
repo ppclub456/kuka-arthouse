@@ -171,8 +171,8 @@ export function AdminPayLinksTable() {
                 <th className="py-3 pr-3">Last view</th>
                 <th className="py-3 pr-3">Paid</th>
                 <th className="py-3 pr-3">AUD</th>
-                <th className="py-3 pr-3">Reference</th>
-                <th className="py-3 pr-3">Memo</th>
+                <th className="py-3 pr-3">Order number</th>
+                <th className="py-3 pr-3">Product</th>
                 <th className="py-3 pr-3">Intent</th>
                 <th className="py-3">Sync</th>
               </tr>

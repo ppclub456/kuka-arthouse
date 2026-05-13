@@ -255,7 +255,7 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-sm border border-zinc-200 bg-white p-5 shadow-sm">
           <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-600">
-            Channel &amp; reference
+            Order Summary
           </h2>
           <dl className="mt-4 space-y-2 text-sm text-zinc-800">
             <div className="flex justify-between gap-4">
@@ -275,11 +275,11 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
               </div>
             ) : null}
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">Reference</dt>
+              <dt className="text-zinc-500">Order number</dt>
               <dd className="text-right font-mono">{o.reference ?? "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">Memo</dt>
+              <dt className="text-zinc-500">Product</dt>
               <dd className="max-w-[60%] text-right">{o.title ?? "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
@@ -399,7 +399,7 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
         className="rounded-sm border border-zinc-200 bg-white p-5 shadow-sm"
       >
         <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-600">
-          Fulfillment (internal)
+          Fulfillment
         </h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-medium text-zinc-700">
@@ -418,13 +418,13 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
           </label>
         </div>
         <label className="mt-4 block text-sm font-medium text-zinc-700">
-          Staff note
+          Tracking number
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={4}
             className="mt-1 w-full rounded-sm border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
-            placeholder="Packing slips, courier ref, refunds, polite reminders…"
+            placeholder="Courier + tracking URL or ID once shipped."
           />
         </label>
         <div className="mt-4 flex flex-wrap items-center gap-3">

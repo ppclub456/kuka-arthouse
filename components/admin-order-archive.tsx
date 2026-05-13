@@ -114,8 +114,8 @@ export function AdminOrderArchive() {
               <tr className="border-b border-[var(--border-dim)] text-xs font-semibold uppercase tracking-[0.1em] text-zinc-600">
                 <th className="py-3 pr-3">When</th>
                 <th className="py-3 pr-3">Channel</th>
-                <th className="py-3 pr-3">Reference</th>
-                <th className="py-3 pr-3">Memo</th>
+                <th className="py-3 pr-3">Order number</th>
+                <th className="py-3 pr-3">Product</th>
                 <th className="py-3 pr-3">Email</th>
                 <th className="py-3 pr-3">Amount</th>
                 <th className="py-3 pr-3">Intent</th>

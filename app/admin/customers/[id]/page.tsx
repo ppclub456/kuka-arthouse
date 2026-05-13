@@ -132,7 +132,7 @@ export default async function AdminCustomerDetailPage(props: Props) {
                   <th className="py-2 pr-3">When</th>
                   <th className="py-2 pr-3">Amount</th>
                   <th className="py-2 pr-3">Fulfillment</th>
-                  <th className="py-2 pr-3">Memo</th>
+                  <th className="py-2 pr-3">Product</th>
                   <th className="py-2">Detail</th>
                 </tr>
               </thead>

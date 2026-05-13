@@ -16,6 +16,8 @@ const FULFILL = new Set([
   "refunded",
 ]);
 
+const FULFILL_COURIERS = new Set(["nz_post", "au_post"]);
+
 function serializeOrderDetail(data: NonNullable<Awaited<ReturnType<typeof getOrderByIdForAdmin>>>) {
   const { order, customer } = data;
   const createdAt =
@@ -46,6 +48,7 @@ function serializeOrderDetail(data: NonNullable<Awaited<ReturnType<typeof getOrd
       customerId: order.customerId,
       fulfillmentStatus: order.fulfillmentStatus,
       internalNote: order.internalNote,
+      fulfillmentCourier: order.fulfillmentCourier ?? "nz_post",
       payLinkCode: order.payLinkCode,
       shippingName: order.shippingName,
       shippingPhone: order.shippingPhone,
@@ -161,7 +164,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const b = body as { fulfillmentStatus?: unknown; internalNote?: unknown };
+  const b = body as {
+    fulfillmentStatus?: unknown;
+    internalNote?: unknown;
+    fulfillmentCourier?: unknown;
+  };
   const patch: Partial<typeof orders.$inferInsert> = {};
 
   if (typeof b.fulfillmentStatus === "string") {
@@ -174,8 +181,19 @@ export async function PATCH(
   if (typeof b.internalNote === "string") {
     patch.internalNote = b.internalNote.trim().slice(0, 4000);
   }
+  if (typeof b.fulfillmentCourier === "string") {
+    const c = b.fulfillmentCourier.trim().toLowerCase();
+    if (!FULFILL_COURIERS.has(c)) {
+      return NextResponse.json({ error: "Invalid fulfillmentCourier." }, { status: 400 });
+    }
+    patch.fulfillmentCourier = c;
+  }
 
-  if (patch.fulfillmentStatus == null && patch.internalNote == null) {
+  if (
+    patch.fulfillmentStatus == null &&
+    patch.internalNote == null &&
+    patch.fulfillmentCourier == null
+  ) {
     return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
   }
 

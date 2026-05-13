@@ -25,6 +25,7 @@ export type AdminOrderRow = {
   customerId: number | null;
   fulfillmentStatus: string | null;
   internalNote: string | null;
+  fulfillmentCourier: string | null;
   payLinkCode: string | null;
   shippingName: string | null;
   shippingPhone: string | null;
@@ -66,6 +67,7 @@ function mapOrderRow(r: typeof orders.$inferSelect): AdminOrderRow {
     customerId: r.customerId,
     fulfillmentStatus: r.fulfillmentStatus,
     internalNote: r.internalNote,
+    fulfillmentCourier: r.fulfillmentCourier ?? null,
     payLinkCode: r.payLinkCode,
     shippingName: r.shippingName,
     shippingPhone: r.shippingPhone,

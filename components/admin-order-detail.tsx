@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import {
+  carrierTrackingUrl,
+  FULFILLMENT_COURIERS,
+  normalizeFulfillmentCourier,
+  type FulfillmentCourier,
+} from "@/lib/fulfillment-courier";
 
 type CartLineSnapshot = {
   productId: string;
@@ -34,6 +40,7 @@ type DetailPayload = {
     customerId: number | null;
     fulfillmentStatus: string | null;
     internalNote: string | null;
+    fulfillmentCourier: string;
     payLinkCode: string | null;
     shippingName: string | null;
     shippingPhone: string | null;
@@ -79,6 +86,7 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
 
   const [status, setStatus] = useState("unfulfilled");
   const [note, setNote] = useState("");
+  const [courier, setCourier] = useState<FulfillmentCourier>("nz_post");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -99,6 +107,7 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
       setData(body as DetailPayload);
       setStatus(body.order.fulfillmentStatus ?? "unfulfilled");
       setNote(body.order.internalNote ?? "");
+      setCourier(normalizeFulfillmentCourier(body.order.fulfillmentCourier));
     } catch {
       setError("Network error.");
       setData(null);
@@ -121,7 +130,11 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fulfillmentStatus: status, internalNote: note }),
+        body: JSON.stringify({
+          fulfillmentStatus: status,
+          internalNote: note,
+          fulfillmentCourier: courier,
+        }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -158,6 +171,16 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
     } finally {
       setSyncing(false);
     }
+  }
+
+  function openCarrierTrack() {
+    const url = carrierTrackingUrl(courier, note);
+    if (!url) {
+      setError("Enter a tracking number first.");
+      return;
+    }
+    setError("");
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   const stripeUrl = () => {
@@ -411,17 +434,41 @@ export function AdminOrderDetail({ orderId }: { orderId: number }) {
               ))}
             </select>
           </label>
+          <label className="block text-sm font-medium text-zinc-700">
+            Courier
+            <select
+              value={courier}
+              onChange={(e) => setCourier(e.target.value as FulfillmentCourier)}
+              className="mt-1 w-full rounded-sm border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
+            >
+              {FULFILLMENT_COURIERS.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-        <label className="mt-4 block text-sm font-medium text-zinc-700">
-          Tracking number
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={4}
-            className="mt-1 w-full rounded-sm border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
-            placeholder="Courier + tracking URL or ID once shipped."
-          />
-        </label>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+          <label className="min-w-0 flex-1 text-sm font-medium text-zinc-700">
+            Tracking number
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={4}
+              className="mt-1 w-full rounded-sm border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
+              placeholder="NZ Post e.g. LX070076292NZ"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => openCarrierTrack()}
+            disabled={!carrierTrackingUrl(courier, note)}
+            className="shrink-0 rounded-sm border border-sky-400 bg-sky-50 px-5 py-2.5 text-sm font-semibold uppercase tracking-[0.1em] text-sky-900 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Track
+          </button>
+        </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="submit"

@@ -79,6 +79,10 @@ export const orders = pgTable(
     ),
     /** Staff-only memo */
     internalNote: text("internal_note"),
+    /** nz_post | au_post — public tracking link in admin */
+    fulfillmentCourier: varchar("fulfillment_courier", { length: 24 }).default(
+      "nz_post",
+    ),
     payLinkCode: varchar("pay_link_code", { length: 16 }),
     shippingName: varchar("shipping_name", { length: 240 }),
     shippingPhone: varchar("shipping_phone", { length: 48 }),

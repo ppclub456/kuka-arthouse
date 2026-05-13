@@ -129,6 +129,7 @@ export async function recordSucceededPaymentIntent(
         customerId,
         fulfillmentStatus: "unfulfilled",
         internalNote: null,
+        fulfillmentCourier: "nz_post",
         payLinkCode: payLinkCode || null,
         shippingName: contact.shippingName,
         shippingPhone: contact.shippingPhone,

@@ -6,7 +6,8 @@ import { INKA_PRODUCT_IMAGE_SRC } from "@/data/inka-product-image-src";
  * Categories mirror reference wall-art collections:
  * japanese-art, famous-art, upcoming artists, vintage, floral (flower-art), abstract.
  * All listings are described as physical prints at a uniform size (see `defaultPhysicalDescription`).
- * Imagery: live URLs synced from https://inkaarthouse.com (Shopify CDN). Re-run:`npm run sync:inka-images`
+ * Imagery: prefer self-hosted files under /catalog (npm run download:inka-images).
+ * Refresh flow: npm run sync:inka-images → npm run download:inka-images
  *
  * Catalog list AUD: each SKU uses a deterministic multiplier ≈ uniformly in [3, 4.5] × the
  * base literal passed to `p()`, rounded to integer (see catalogListPriceMultiplier).

@@ -216,9 +216,11 @@ async function main() {
   }
 
   const lines = [
-    "// Auto-generated — do not hand-edit.",
-    '// Source: Shopify https://inkaarthouse.com/products.json — run:',
+    "// Auto-generated — remote Shopify CDN URLs.",
+    '// Source: https://inkaarthouse.com/products.json',
     '//   npm run sync:inka-images',
+    "// Self-host:",
+    '//   npm run download:inka-images',
     "//",
     "export const INKA_PRODUCT_IMAGE_SRC: Record<string, string> = {",
   ];

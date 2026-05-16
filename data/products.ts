@@ -1,10 +1,12 @@
 import type { Product } from "@/lib/types";
 
+import { INKA_PRODUCT_IMAGE_SRC } from "@/data/inka-product-image-src";
+
 /**
  * Categories mirror reference wall-art collections:
  * japanese-art, famous-art, upcoming artists, vintage, floral (flower-art), abstract.
  * All listings are described as physical prints at a uniform size (see `defaultPhysicalDescription`).
- * Imagery: Shopify CDN — demo only; keep vendor permission on file.
+ * Imagery: live URLs synced from https://inkaarthouse.com (Shopify CDN). Re-run:`npm run sync:inka-images`
  *
  * Catalog list AUD: each SKU uses a deterministic multiplier ≈ uniformly in [3, 4.5] × the
  * base literal passed to `p()`, rounded to integer (see catalogListPriceMultiplier).
@@ -50,8 +52,10 @@ function p(
 ): Product {
   const baseAud = Math.floor(args.priceAud);
   const mult = catalogListPriceMultiplier(args.id);
+  const imageSrc = INKA_PRODUCT_IMAGE_SRC[args.id] ?? args.imageSrc;
   return {
     ...args,
+    imageSrc,
     description: args.description ?? defaultPhysicalDescription(args.title),
     priceAud: Math.max(1, Math.round(baseAud * mult)),
     formats: ["Physical print"],

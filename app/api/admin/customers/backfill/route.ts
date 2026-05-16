@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ADMIN_DB_SCHEMA_HINT } from "@/lib/admin-db-schema-hint";
 import { isPgUndefinedColumnError } from "@/lib/admin-api-params";
 import { backfillCustomersFromOrders } from "@/lib/db/backfill-customers-from-orders";
 import { getOrdersDb } from "@/lib/db/client";
@@ -26,8 +27,7 @@ export async function POST() {
     if (isPgUndefinedColumnError(e)) {
       return NextResponse.json(
         {
-          error:
-            "Database schema is out of date. Run npm run db:push (or apply drizzle/0002 and 0003 SQL files).",
+          error: ADMIN_DB_SCHEMA_HINT,
         },
         { status: 503 },
       );

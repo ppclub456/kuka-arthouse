@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { orders } from "@/lib/db/schema";
 import { getOrdersDb } from "@/lib/db/client";
+import { ADMIN_DB_SCHEMA_HINT } from "@/lib/admin-db-schema-hint";
 import { isPgUndefinedColumnError, parseRouteIdParam } from "@/lib/admin-api-params";
 import { getOrderByIdForAdmin } from "@/lib/db/order-admin-queries";
 import { requireAdminOr401 } from "@/lib/require-admin-session";
@@ -130,8 +131,7 @@ export async function GET(
     if (isPgUndefinedColumnError(e)) {
       return NextResponse.json(
         {
-          error:
-            "Database is missing new columns. Run migration: drizzle/0002_customers_orders_admin.sql or npm run db:push",
+          error: ADMIN_DB_SCHEMA_HINT,
         },
         { status: 503 },
       );
@@ -212,8 +212,7 @@ export async function PATCH(
     if (isPgUndefinedColumnError(e)) {
       return NextResponse.json(
         {
-          error:
-            "Database is missing new columns. Run migration: drizzle/0002_customers_orders_admin.sql or npm run db:push",
+          error: ADMIN_DB_SCHEMA_HINT,
         },
         { status: 503 },
       );

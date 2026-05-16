@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { orders } from "@/lib/db/schema";
 import { getOrdersDb } from "@/lib/db/client";
 import { upsertCustomerForOrder } from "@/lib/db/customer-repo";
+import { ADMIN_DB_SCHEMA_HINT } from "@/lib/admin-db-schema-hint";
 import { isPgUndefinedColumnError, parseRouteIdParam } from "@/lib/admin-api-params";
 import { requireAdminOr401 } from "@/lib/require-admin-session";
 import { getStripe } from "@/lib/stripe-server";
@@ -52,10 +53,7 @@ export async function POST(
   } catch (e) {
     console.error("[api/admin/orders/sync-stripe] load", e);
     if (isPgUndefinedColumnError(e)) {
-      return NextResponse.json(
-        { error: "Database schema out of date. Run npm run db:push." },
-        { status: 503 },
-      );
+      return NextResponse.json({ error: ADMIN_DB_SCHEMA_HINT }, { status: 503 });
     }
     return NextResponse.json({ error: "Could not load order." }, { status: 500 });
   }

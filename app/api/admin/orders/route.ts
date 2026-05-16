@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ADMIN_DB_SCHEMA_HINT } from "@/lib/admin-db-schema-hint";
 import { isPgUndefinedColumnError } from "@/lib/admin-api-params";
 import { getOrdersDb } from "@/lib/db/client";
 import { listOrdersForAdmin } from "@/lib/db/order-admin-queries";
@@ -81,8 +82,7 @@ export async function GET(request: Request) {
       return NextResponse.json(
         {
           rows: [],
-          error:
-            "Database is missing new columns. Run: drizzle/0002_customers_orders_admin.sql or npm run db:push",
+          error: ADMIN_DB_SCHEMA_HINT,
         },
         { status: 503 },
       );

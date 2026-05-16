@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { AdminNav } from "@/components/admin-nav";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { AdminCustomerNotes } from "@/components/admin-customer-notes";
-import { stripeDashboardCustomerUrl } from "@/lib/stripe-dashboard-url";
+import { ADMIN_DB_SCHEMA_HINT } from "@/lib/admin-db-schema-hint";
 import { isPgUndefinedColumnError } from "@/lib/admin-api-params";
+import { stripeDashboardCustomerUrl } from "@/lib/stripe-dashboard-url";
 import { getOrdersDb } from "@/lib/db/client";
 import { getCustomerByIdForAdmin } from "@/lib/db/order-admin-queries";
 
@@ -46,10 +47,7 @@ export default async function AdminCustomerDetailPage(props: Props) {
         <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-16 sm:px-6">
           <AdminNav />
           <p className="mt-10 font-medium text-amber-900" role="status">
-            Database schema is out of date. Run{" "}
-            <code className="rounded bg-zinc-200 px-1 text-sm">npm run db:push</code>
-            {" "}or apply <code className="rounded bg-zinc-200 px-1 text-sm">drizzle/0002_*</code> and{" "}
-            <code className="rounded bg-zinc-200 px-1 text-sm">0003_*</code>.
+            {ADMIN_DB_SCHEMA_HINT}
           </p>
           <p className="mt-4">
             <Link href="/admin/customers" className="text-sky-800 hover:underline">

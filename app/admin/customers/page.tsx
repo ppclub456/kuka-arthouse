@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdminCustomerBackfillButton } from "@/components/admin-customer-backfill-button";
 import { AdminNav } from "@/components/admin-nav";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
+import { ADMIN_DB_SCHEMA_HINT } from "@/lib/admin-db-schema-hint";
 import { isPgUndefinedColumnError } from "@/lib/admin-api-params";
 import { getOrdersDb } from "@/lib/db/client";
 import { stripeDashboardCustomerUrl } from "@/lib/stripe-dashboard-url";
@@ -21,8 +22,7 @@ export default async function AdminCustomersPage() {
     } catch (e) {
       console.error("[admin/customers]", e);
       if (isPgUndefinedColumnError(e)) {
-        schemaError =
-          "Database schema is out of date. Run npm run db:push or apply drizzle/0002_customers_orders_admin.sql and drizzle/0003_customers_stripe_id.sql.";
+        schemaError = ADMIN_DB_SCHEMA_HINT;
       } else {
         throw e;
       }

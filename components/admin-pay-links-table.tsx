@@ -28,6 +28,11 @@ function statusBadge(r: Row) {
   return { label: "Open", cls: "text-amber-900 font-medium" };
 }
 
+/** Open = unpaid and before expiry (matches status column). */
+function isOpenPayLink(r: Row) {
+  return statusBadge(r).label === "Open";
+}
+
 export function AdminPayLinksTable() {
   const [rows, setRows] = useState<Row[]>([]);
   const [warning, setWarning] = useState("");
@@ -35,6 +40,7 @@ export function AdminPayLinksTable() {
   const [loading, setLoading] = useState(true);
   const [reconciling, setReconciling] = useState<string | null>(null);
   const [reconcileMsg, setReconcileMsg] = useState("");
+  const [deletingCode, setDeletingCode] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -108,6 +114,36 @@ export function AdminPayLinksTable() {
     }
   }
 
+  async function deletePayLink(code: string) {
+    if (
+      !window.confirm(
+        `Delete payment link ${code}? This cannot be undone. Only works for open (unpaid, not expired) links.`,
+      )
+    ) {
+      return;
+    }
+    setDeletingCode(code);
+    setError("");
+    setReconcileMsg("");
+    try {
+      const res = await fetch(
+        `/api/admin/pay-links/${encodeURIComponent(code)}`,
+        { method: "DELETE", credentials: "include" },
+      );
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "Delete failed.");
+        return;
+      }
+      setReconcileMsg(`Deleted link ${code}.`);
+      void load();
+    } catch {
+      setError("Network error.");
+    } finally {
+      setDeletingCode(null);
+    }
+  }
+
   function fmt(iso: string | null) {
     if (!iso) return "—";
     try {
@@ -162,7 +198,7 @@ export function AdminPayLinksTable() {
         </p>
       ) : (
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[1040px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[1120px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--border-dim)] text-xs font-semibold uppercase tracking-[0.1em] text-zinc-600">
                 <th className="py-3 pr-3">Code</th>
@@ -174,7 +210,8 @@ export function AdminPayLinksTable() {
                 <th className="py-3 pr-3">Order number</th>
                 <th className="py-3 pr-3">Product</th>
                 <th className="py-3 pr-3">Intent</th>
-                <th className="py-3">Sync</th>
+                <th className="py-3 pr-3">Sync</th>
+                <th className="py-3">Remove</th>
               </tr>
             </thead>
             <tbody>
@@ -221,6 +258,18 @@ export function AdminPayLinksTable() {
                             className="text-left text-xs font-semibold uppercase tracking-[0.08em] text-sky-800 underline-offset-2 hover:underline disabled:opacity-50"
                           >
                             {reconciling === r.code ? "…" : "Mark paid"}
+                          </button>
+                        ) : null}
+                      </td>
+                      <td className="py-3 align-top">
+                        {isOpenPayLink(r) ? (
+                          <button
+                            type="button"
+                            disabled={deletingCode === r.code}
+                            onClick={() => void deletePayLink(r.code)}
+                            className="text-left text-xs font-semibold uppercase tracking-[0.08em] text-red-700 underline-offset-2 hover:underline disabled:opacity-50"
+                          >
+                            {deletingCode === r.code ? "…" : "Delete"}
                           </button>
                         ) : null}
                       </td>

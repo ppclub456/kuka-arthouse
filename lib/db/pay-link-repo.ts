@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, isNull } from "drizzle-orm";
 import type Stripe from "stripe";
 import { getOrdersDb } from "@/lib/db/client";
 import {
@@ -152,6 +152,34 @@ export async function markPayLinkPaidFromPaymentIntent(pi: Stripe.PaymentIntent)
       codeNorm,
     );
   }
+}
+
+/** Remove an unpaid link that is still within its TTL (admin “Open” rows only). */
+export async function deleteOpenPayLink(
+  rawCode: string,
+): Promise<"deleted" | "not_found" | "not_open" | "no_db"> {
+  const db = getOrdersDb();
+  if (!db) return "no_db";
+
+  const code = normalizePayLinkCode(rawCode);
+  const now = new Date();
+
+  const removed = await db
+    .delete(payLinks)
+    .where(
+      and(
+        eq(payLinks.code, code),
+        isNull(payLinks.paidAt),
+        gte(payLinks.expiresAt, now),
+      ),
+    )
+    .returning({ code: payLinks.code });
+
+  if (removed.length > 0) return "deleted";
+
+  const [row] = await db.select({ code: payLinks.code }).from(payLinks).where(eq(payLinks.code, code)).limit(1);
+  if (!row) return "not_found";
+  return "not_open";
 }
 
 /** Admin list ordered by issuance time desc. */

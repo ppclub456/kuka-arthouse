@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { PRODUCTS } from "@/data/products";
 
 /** invoice = single total AUD (order); catalog / custom = existing flows */
@@ -21,6 +21,9 @@ export function AdminPaymentLinkTool() {
   const [issuedShortCode, setIssuedShortCode] = useState("");
   const [genError, setGenError] = useState("");
   const [genPending, setGenPending] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
+  const [copyHint, setCopyHint] = useState("");
+  const copyUrlDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selected = PRODUCTS.find((p) => p.id === productId);
 
@@ -68,6 +71,12 @@ export function AdminPaymentLinkTool() {
     setGenPending(true);
     setIssuedShortCode("");
     setPayPageUrl("");
+    setUrlCopied(false);
+    setCopyHint("");
+    if (copyUrlDismissRef.current) {
+      clearTimeout(copyUrlDismissRef.current);
+      copyUrlDismissRef.current = null;
+    }
 
     try {
       const invoiceTotalAud = Number.parseFloat(invoiceTotal.trim() || "0");
@@ -111,6 +120,24 @@ export function AdminPaymentLinkTool() {
       setGenError("Network error — try again.");
     } finally {
       setGenPending(false);
+    }
+  }
+
+  async function copyPayPageUrlToClipboard() {
+    setCopyHint("");
+    try {
+      await navigator.clipboard.writeText(payPageUrl);
+      if (copyUrlDismissRef.current) {
+        clearTimeout(copyUrlDismissRef.current);
+      }
+      setUrlCopied(true);
+      copyUrlDismissRef.current = setTimeout(() => {
+        setUrlCopied(false);
+        copyUrlDismissRef.current = null;
+      }, 2200);
+    } catch {
+      setUrlCopied(false);
+      setCopyHint("Copy failed — select the URL above and use ⌘C / Ctrl+C.");
     }
   }
 
@@ -390,11 +417,24 @@ export function AdminPaymentLinkTool() {
           ) : null}
           <button
             type="button"
-            onClick={() => void navigator.clipboard.writeText(payPageUrl)}
+            onClick={() => void copyPayPageUrlToClipboard()}
             className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-sky-800 underline-offset-4 hover:text-sky-950 hover:underline"
           >
-            Copy to clipboard
+            {urlCopied ? "Copied!" : "Copy to clipboard"}
           </button>
+          {urlCopied ? (
+            <span
+              className="mt-2 block text-sm font-medium text-emerald-800"
+              role="status"
+            >
+              Link copied — you can paste it to the customer.
+            </span>
+          ) : null}
+          {copyHint ? (
+            <span className="mt-2 block text-sm font-medium text-amber-900" role="alert">
+              {copyHint}
+            </span>
+          ) : null}
         </div>
       ) : null}
     </div>

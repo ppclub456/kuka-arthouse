@@ -14,13 +14,15 @@ export async function GET() {
       rate,
       date,
       pair: "NZD/AUD",
-      source: "frankfurter",
+      source: "google.com",
     });
   } catch (e) {
     console.error("[api/admin/fx/nzd-aud] GET", e);
-    return NextResponse.json(
-      { error: "Could not load today’s NZD→AUD rate. Try again in a moment." },
-      { status: 502 },
-    );
+    const message =
+      e instanceof Error
+        ? e.message
+        : "Could not load today’s NZD→AUD rate. Try again in a moment.";
+    const status = 502;
+    return NextResponse.json({ error: message }, { status });
   }
 }

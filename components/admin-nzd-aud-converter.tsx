@@ -123,7 +123,8 @@ export function AdminNzdAudConverter({ onApplyAud, className = "" }: Props) {
           "Loading today’s rate…"
         ) : rate != null ? (
           <>
-            Rate: 1 NZD = <span className="font-mono font-medium">{rate.toFixed(4)}</span> AUD
+            Google Finance: 1 NZD ={" "}
+            <span className="font-mono font-medium">{rate.toFixed(4)}</span> AUD
             {rateDate ? (
               <>
                 {" "}

@@ -33,7 +33,7 @@ export function AdminNzdAudConverter({ onApplyAud, className = "" }: Props) {
         if (!res.ok || typeof data.rate !== "number") {
           setRate(null);
           setRateDate(null);
-          setRateError(data.error ?? "无法加载当日汇率。");
+          setRateError(data.error ?? "Could not load today’s exchange rate.");
           return;
         }
         setRate(data.rate);
@@ -42,7 +42,7 @@ export function AdminNzdAudConverter({ onApplyAud, className = "" }: Props) {
         if (!cancelled) {
           setRate(null);
           setRateDate(null);
-          setRateError("网络错误，请稍后重试。");
+          setRateError("Network error — try again.");
         }
       } finally {
         if (!cancelled) setRateLoading(false);
@@ -76,10 +76,11 @@ export function AdminNzdAudConverter({ onApplyAud, className = "" }: Props) {
       className={`rounded-sm border border-sky-200/80 bg-sky-50/40 p-5 sm:p-6 ${className}`}
     >
       <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-800">
-        NZD → AUD 换算
+        NZD → AUD converter
       </h3>
       <p className="mt-2 text-sm text-zinc-600">
-        输入客人新西兰元金额，按当日汇率自动换算为澳元（用于下方付款链接的 AUD 金额）。
+        Enter the customer&apos;s NZD amount; we convert to AUD at today&apos;s rate for the payment
+        link fields below.
       </p>
 
       <div className="mt-5 grid gap-5 sm:grid-cols-2">
@@ -88,7 +89,7 @@ export function AdminNzdAudConverter({ onApplyAud, className = "" }: Props) {
             htmlFor="nzd-in"
             className="text-sm font-medium uppercase tracking-wide text-zinc-700"
           >
-            客人金额 (NZD)
+            Customer amount (NZD)
           </label>
           <input
             id="nzd-in"
@@ -105,7 +106,7 @@ export function AdminNzdAudConverter({ onApplyAud, className = "" }: Props) {
             htmlFor="aud-out"
             className="text-sm font-medium uppercase tracking-wide text-zinc-700"
           >
-            换算结果 (AUD)
+            Converted amount (AUD)
           </label>
           <output
             id="aud-out"
@@ -119,14 +120,14 @@ export function AdminNzdAudConverter({ onApplyAud, className = "" }: Props) {
 
       <p className="mt-3 text-sm text-zinc-600">
         {rateLoading ? (
-          "正在加载当日汇率…"
+          "Loading today’s rate…"
         ) : rate != null ? (
           <>
-            汇率 1 NZD = <span className="font-mono font-medium">{rate.toFixed(4)}</span> AUD
+            Rate: 1 NZD = <span className="font-mono font-medium">{rate.toFixed(4)}</span> AUD
             {rateDate ? (
               <>
                 {" "}
-                · 日期 <span className="font-mono">{rateDate}</span>
+                · Date <span className="font-mono">{rateDate}</span>
               </>
             ) : null}
             {nzdAmount != null && audAmount != null ? (
@@ -152,7 +153,7 @@ export function AdminNzdAudConverter({ onApplyAud, className = "" }: Props) {
           onClick={() => onApplyAud(audFormatted)}
           className="mt-4 text-sm font-semibold uppercase tracking-[0.16em] text-sky-800 underline-offset-4 hover:text-sky-950 hover:underline"
         >
-          填入下方 AUD 金额
+          Apply to AUD field below
         </button>
       ) : null}
     </div>

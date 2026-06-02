@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { countryLabelToIso } from "@/lib/country-iso";
+import { convertNzdToAud, getNzdAudRate } from "@/lib/fx/nzd-aud";
 import { pricingPaymentPageCheckout } from "@/lib/pricing-payment-page";
 import { getStripe } from "@/lib/stripe-server";
 
@@ -15,7 +16,8 @@ type Addr = {
 
 type Body = {
   productId?: string;
-  amountAud?: number;
+  /** Customer-entered NZD; converted server-side to AUD for Stripe. */
+  amountNzd?: number;
   orderNumber?: string;
   shipping?: {
     email?: string;
@@ -88,9 +90,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please enter your order number." }, { status: 400 });
   }
 
+  const amountNzd = Number(body.amountNzd);
+  if (!Number.isFinite(amountNzd) || amountNzd <= 0) {
+    return NextResponse.json(
+      { error: "Please enter a valid payment amount in NZD." },
+      { status: 400 },
+    );
+  }
+
+  let fxRate: number;
+  let fxDate: string;
+  try {
+    const fx = await getNzdAudRate();
+    fxRate = fx.rate;
+    fxDate = fx.date;
+  } catch (e) {
+    const msg =
+      e instanceof Error
+        ? e.message
+        : "Could not load exchange rate. Try again in a moment.";
+    return NextResponse.json({ error: msg }, { status: 502 });
+  }
+
+  const amountAud = convertNzdToAud(amountNzd, fxRate);
+
   let priced: ReturnType<typeof pricingPaymentPageCheckout>;
   try {
-    priced = pricingPaymentPageCheckout(productId, Number(body.amountAud));
+    priced = pricingPaymentPageCheckout(productId, amountAud);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Invalid payment amount.";
     return NextResponse.json({ error: msg }, { status: 400 });
@@ -167,6 +193,9 @@ export async function POST(request: Request) {
     order_flow: "payment_page",
     product_id: productId,
     payment_reference: orderNumber.slice(0, 180),
+    amount_nzd: amountNzd.toFixed(2),
+    fx_rate_nzd_aud: fxRate.toFixed(6),
+    fx_rate_date: fxDate.slice(0, 10),
     subtotal_aud: priced.subtotalAud.toFixed(2),
     shipping_aud: "0.00",
     line_count: "1",
@@ -216,6 +245,10 @@ export async function POST(request: Request) {
       clientSecret: pi.client_secret,
       publishableKey: pk,
       totalAud: priced.totalAud,
+      amountNzd,
+      amountAud: priced.totalAud,
+      fxRate,
+      fxDate,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Stripe error";

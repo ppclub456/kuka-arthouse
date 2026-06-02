@@ -12,9 +12,8 @@ export default function PaymentPage() {
         Make a payment
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-[var(--muted-foreground)]">
-        Pay for your order in Australian dollars. Choose your artwork, enter your order number and
-        the amount we agreed with you, add shipping and billing details, then pay securely with
-        card via Stripe.
+        Enter your order number and payment in NZD — we convert to AUD using Google Finance, then
+        you pay by card in Australian dollars. Add shipping and billing details below.
       </p>
 
       {!publishableKey ? (

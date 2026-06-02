@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { convertNzdToAud } from "@/lib/fx/nzd-aud";
 import type { StripeBillingPrefill } from "@/components/embedded-stripe-payment";
 import { EmbeddedStripePayment } from "@/components/embedded-stripe-payment";
 import { CHECKOUT_COUNTRY_LABELS } from "@/lib/checkout-countries";
@@ -20,7 +21,11 @@ type Props = {
 export function PaymentPageForm({ publishableKey }: Props) {
   const [productId, setProductId] = useState(PRODUCTS[0]?.id ?? "");
   const [orderNumber, setOrderNumber] = useState("");
-  const [amountInput, setAmountInput] = useState("");
+  const [nzdInput, setNzdInput] = useState("");
+  const [fxRate, setFxRate] = useState<number | null>(null);
+  const [fxDate, setFxDate] = useState<string | null>(null);
+  const [fxError, setFxError] = useState("");
+  const [fxLoading, setFxLoading] = useState(true);
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -45,12 +50,56 @@ export function PaymentPageForm({ publishableKey }: Props) {
 
   const selected = PRODUCTS.find((p) => p.id === productId);
 
-  const amountAud = useMemo(() => {
-    const n = Number.parseFloat(amountInput.trim().replace(/,/g, ""));
-    return Number.isFinite(n) && n >= 0 ? n : null;
-  }, [amountInput]);
+  useEffect(() => {
+    let cancelled = false;
 
-  const previewTotal = amountAud;
+    async function loadRate() {
+      setFxLoading(true);
+      setFxError("");
+      try {
+        const res = await fetch("/api/fx/nzd-aud");
+        const data = (await res.json().catch(() => ({}))) as {
+          rate?: number;
+          date?: string;
+          error?: string;
+        };
+        if (cancelled) return;
+        if (!res.ok || typeof data.rate !== "number") {
+          setFxRate(null);
+          setFxDate(null);
+          setFxError(data.error ?? "Could not load today’s exchange rate.");
+          return;
+        }
+        setFxRate(data.rate);
+        setFxDate(typeof data.date === "string" ? data.date : null);
+      } catch {
+        if (!cancelled) {
+          setFxRate(null);
+          setFxDate(null);
+          setFxError("Network error — try again.");
+        }
+      } finally {
+        if (!cancelled) setFxLoading(false);
+      }
+    }
+
+    void loadRate();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const amountNzd = useMemo(() => {
+    const n = Number.parseFloat(nzdInput.trim().replace(/,/g, ""));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [nzdInput]);
+
+  const amountAud = useMemo(() => {
+    if (amountNzd == null || fxRate == null) return null;
+    return convertNzdToAud(amountNzd, fxRate);
+  }, [amountNzd, fxRate]);
+
+  const previewTotalAud = amountAud;
 
   function syncBillingFromShipping() {
     setBillName(name);
@@ -90,7 +139,20 @@ export function PaymentPageForm({ publishableKey }: Props) {
       : undefined;
 
   const amountLabel =
-    totalAud != null ? formatMoaPrice(totalAud) : previewTotal != null ? formatMoaPrice(previewTotal) : "—";
+    totalAud != null
+      ? formatMoaPrice(totalAud)
+      : previewTotalAud != null
+        ? formatMoaPrice(previewTotalAud)
+        : "—";
+
+  function formatNzd(amount: number): string {
+    return new Intl.NumberFormat("en-NZ", {
+      style: "currency",
+      currency: "NZD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  }
 
   async function startPayment() {
     setMsg("");
@@ -106,8 +168,16 @@ export function PaymentPageForm({ publishableKey }: Props) {
       setMsg("Please enter your order number.");
       return;
     }
+    if (amountNzd == null) {
+      setMsg("Please enter your payment amount in NZD.");
+      return;
+    }
+    if (fxRate == null) {
+      setMsg(fxError || "Exchange rate is not available. Please try again shortly.");
+      return;
+    }
     if (amountAud == null || amountAud < 0.5) {
-      setMsg("Enter a payment amount of at least A$0.50.");
+      setMsg("Converted amount must be at least A$0.50 to pay by card.");
       return;
     }
     if (
@@ -138,7 +208,7 @@ export function PaymentPageForm({ publishableKey }: Props) {
         body: JSON.stringify({
           productId,
           orderNumber: orderNumber.trim(),
-          amountAud,
+          amountNzd,
           shipping: {
             email: email.trim(),
             name: name.trim(),
@@ -180,7 +250,7 @@ export function PaymentPageForm({ publishableKey }: Props) {
       setTotalAud(
         typeof data.totalAud === "number" && Number.isFinite(data.totalAud)
           ? data.totalAud
-          : previewTotal,
+          : previewTotalAud,
       );
       setStep("payment");
     } catch {
@@ -213,7 +283,8 @@ export function PaymentPageForm({ publishableKey }: Props) {
                 Product &amp; amount
               </h2>
               <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-                Select the artwork you are paying for, then enter the amount agreed with us (AUD).
+                Select the artwork you are paying for, enter your order number, then the amount in
+                NZD — we convert to AUD at today&apos;s Google Finance rate for card checkout.
               </p>
 
               <div className="mt-6">
@@ -271,37 +342,87 @@ export function PaymentPageForm({ publishableKey }: Props) {
                   required
                   value={orderNumber}
                   onChange={(e) => setOrderNumber(e.target.value)}
-                  placeholder="e.g. Invoice #4821"
+                  placeholder="e.g. #PT-1234"
                   autoComplete="off"
                   className={inputCls}
                 />
-                <p className="mt-1.5 text-xs text-[var(--muted-foreground)]">
-                  The reference we gave you (invoice or order ID) so we can match your payment.
-                </p>
               </div>
 
-              <div className="mt-6">
-                <label
-                  htmlFor="pay-amount"
-                  className="text-sm font-medium text-[var(--foreground)]"
-                >
-                  Payment amount (AUD) <span className="text-[var(--accent)]">*</span>
-                </label>
-                <input
-                  id="pay-amount"
-                  inputMode="decimal"
-                  required
-                  min={0.5}
-                  step="0.01"
-                  placeholder="0.00"
-                  value={amountInput}
-                  onChange={(e) => setAmountInput(e.target.value)}
-                  className={inputCls}
-                />
-                <p className="mt-1.5 text-xs text-[var(--muted-foreground)]">
-                  Minimum A$0.50. No shipping fee is added on this page — enter the total we quoted you.
-                </p>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="pay-amount-nzd"
+                    className="text-sm font-medium text-[var(--foreground)]"
+                  >
+                    Payment amount (NZD) <span className="text-[var(--accent)]">*</span>
+                  </label>
+                  <input
+                    id="pay-amount-nzd"
+                    inputMode="decimal"
+                    required
+                    min={0.01}
+                    step="0.01"
+                    placeholder="0.00"
+                    value={nzdInput}
+                    onChange={(e) => setNzdInput(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="pay-amount-aud"
+                    className="text-sm font-medium text-[var(--foreground)]"
+                  >
+                    You pay (AUD)
+                  </label>
+                  <output
+                    id="pay-amount-aud"
+                    htmlFor="pay-amount-nzd"
+                    className={`${inputCls} block tabular-nums font-semibold text-cyan-200/90`}
+                  >
+                    {amountAud != null
+                      ? formatMoaPrice(amountAud)
+                      : nzdInput.trim()
+                        ? "—"
+                        : formatMoaPrice(0)}
+                  </output>
+                </div>
               </div>
+              <p className="mt-2 text-xs text-[var(--muted-foreground)]">
+                {fxLoading ? (
+                  "Loading Google Finance rate…"
+                ) : fxRate != null ? (
+                  <>
+                    Google Finance: 1 NZD ={" "}
+                    <span className="font-mono font-medium">{fxRate.toFixed(4)}</span> AUD
+                    {fxDate ? (
+                      <>
+                        {" "}
+                        · <span className="font-mono">{fxDate}</span>
+                      </>
+                    ) : null}
+                    {amountNzd != null && amountAud != null ? (
+                      <>
+                        {" "}
+                        · {formatNzd(amountNzd)} ≈{" "}
+                        <span className="font-medium text-cyan-200/90">
+                          {formatMoaPrice(amountAud)}
+                        </span>{" "}
+                        charged at checkout
+                      </>
+                    ) : null}
+                  </>
+                ) : null}
+              </p>
+              {fxError ? (
+                <p className="mt-1 text-xs font-medium text-red-400/95" role="alert">
+                  {fxError}
+                </p>
+              ) : null}
+              <p className="mt-1.5 text-xs text-[var(--muted-foreground)]">
+                Card checkout is in Australian dollars (AUD). Minimum charge A$0.50 after conversion.
+                No shipping fee is added on this page.
+              </p>
             </section>
 
             <section className="ai-panel rounded-sm p-6">
@@ -518,7 +639,7 @@ export function PaymentPageForm({ publishableKey }: Props) {
 
             <button
               type="submit"
-              disabled={busy}
+              disabled={busy || fxLoading || fxRate == null}
               className="moa-cta w-full py-4 text-sm font-semibold uppercase tracking-[0.2em] disabled:opacity-60"
             >
               {busy ? "Preparing secure payment…" : "Continue to card payment"}
@@ -587,10 +708,16 @@ export function PaymentPageForm({ publishableKey }: Props) {
             </p>
           ) : null}
           <dl className="mt-4 space-y-2 text-sm">
+            <div className="flex justify-between text-[var(--muted-foreground)]">
+              <dt>Amount (NZD)</dt>
+              <dd className="font-medium text-[var(--foreground)]">
+                {amountNzd != null ? formatNzd(amountNzd) : "—"}
+              </dd>
+            </div>
             <div className="flex justify-between border-t border-[var(--border)] pt-3 text-base font-semibold">
-              <dt className="text-[var(--foreground)]">Total due</dt>
+              <dt className="text-[var(--foreground)]">You pay (AUD)</dt>
               <dd className="bg-gradient-to-r from-cyan-300 to-violet-300 bg-clip-text text-transparent">
-                {previewTotal != null ? formatMoaPrice(previewTotal) : "—"}
+                {previewTotalAud != null ? formatMoaPrice(previewTotalAud) : "—"}
               </dd>
             </div>
           </dl>

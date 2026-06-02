@@ -378,7 +378,7 @@ export function PaymentPageForm({ publishableKey }: Props) {
                   <output
                     id="pay-amount-aud"
                     htmlFor="pay-amount-nzd"
-                    className={`${inputCls} block tabular-nums font-semibold text-cyan-200/90`}
+                    className={`${inputCls} block tabular-nums font-semibold text-sky-900`}
                   >
                     {amountAud != null
                       ? formatMoaPrice(amountAud)
@@ -405,7 +405,7 @@ export function PaymentPageForm({ publishableKey }: Props) {
                       <>
                         {" "}
                         · {formatNzd(amountNzd)} ≈{" "}
-                        <span className="font-medium text-cyan-200/90">
+                        <span className="font-medium text-sky-900">
                           {formatMoaPrice(amountAud)}
                         </span>{" "}
                         charged at checkout
@@ -663,6 +663,7 @@ export function PaymentPageForm({ publishableKey }: Props) {
                 clientSecret={clientSecret}
                 amountLabel={amountLabel}
                 defaultBillingDetails={billingPrefill}
+                appearanceTheme="stripe"
               />
             </div>
             <button
@@ -682,7 +683,7 @@ export function PaymentPageForm({ publishableKey }: Props) {
 
       <aside className="lg:sticky lg:top-24">
         <div className="ai-panel rounded-sm p-6">
-          <h2 className="text-base font-semibold text-cyan-400/90">Payment summary</h2>
+          <h2 className="text-base font-semibold text-zinc-900">Payment summary</h2>
           {selected ? (
             <div className="mt-4 flex gap-3 border-b border-[var(--border)] pb-4">
               <div className="relative h-16 w-14 shrink-0 overflow-hidden">

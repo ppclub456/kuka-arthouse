@@ -8,16 +8,16 @@ export default function PaymentPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-12">
-      <h1 className="bg-gradient-to-r from-cyan-200 to-violet-300 bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
+      <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
         Make a payment
       </h1>
-      <p className="mt-2 max-w-2xl text-sm text-[var(--muted-foreground)]">
+      <p className="mt-2 max-w-2xl text-sm text-zinc-600">
         Enter your order number and payment in NZD — we convert to AUD using Google Finance, then
         you pay by card in Australian dollars. Add shipping and billing details below.
       </p>
 
       {!publishableKey ? (
-        <p className="mt-10 rounded-sm border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+        <p className="mt-10 rounded-sm border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           Card payments are not configured on this site yet. Please contact{" "}
           <a href={`mailto:${STORE_SUPPORT_EMAIL}`} className="underline">
             {STORE_SUPPORT_EMAIL}

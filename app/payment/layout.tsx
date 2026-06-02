@@ -9,5 +9,6 @@ export default function PaymentLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  // Match admin's readable light theme for customers.
+  return <div className="admin-app-scope min-h-full flex-1">{children}</div>;
 }

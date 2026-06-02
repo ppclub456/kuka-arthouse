@@ -26,11 +26,13 @@ export function EmbeddedStripePayment({
   clientSecret,
   amountLabel,
   defaultBillingDetails,
+  appearanceTheme,
 }: {
   publishableKey: string;
   clientSecret: string;
   amountLabel: string;
   defaultBillingDetails?: StripeBillingPrefill;
+  appearanceTheme?: "night" | "stripe";
 }) {
   const stripePromise = useMemo(
     () => loadStripe(publishableKey),
@@ -41,19 +43,28 @@ export function EmbeddedStripePayment({
     () => ({
       clientSecret,
       appearance: {
-        theme: "night" as const,
-        variables: {
-          colorPrimary: "#22d3ee",
-          colorBackground: "#0f172a",
-          colorText: "#e2e8f0",
-          borderRadius: "4px",
-        },
+        theme: (appearanceTheme ?? "night") as "night" | "stripe",
+        variables:
+          (appearanceTheme ?? "night") === "stripe"
+            ? {
+                // Light theme that fits admin palette.
+                colorPrimary: "#0284c7",
+                colorBackground: "#ffffff",
+                colorText: "#0a0a0a",
+                borderRadius: "4px",
+              }
+            : {
+                colorPrimary: "#22d3ee",
+                colorBackground: "#0f172a",
+                colorText: "#e2e8f0",
+                borderRadius: "4px",
+              },
       },
       ...(defaultBillingDetails
         ? { defaultValues: { billingDetails: defaultBillingDetails } }
         : {}),
     }),
-    [clientSecret, defaultBillingDetails],
+    [clientSecret, defaultBillingDetails, appearanceTheme],
   );
 
   return (

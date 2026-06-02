@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { countryLabelToIso } from "@/lib/country-iso";
 import { convertNzdToAud, getNzdAudRate } from "@/lib/fx/nzd-aud";
+import { getOrdersDb } from "@/lib/db/client";
+import { orders, type OrderCartLineSnapshot } from "@/lib/db/schema";
 import { pricingPaymentPageCheckout } from "@/lib/pricing-payment-page";
 import { getStripe } from "@/lib/stripe-server";
 
@@ -239,6 +241,60 @@ export async function POST(request: Request) {
         { error: "Could not start payment. Please try again." },
         { status: 500 },
       );
+    }
+
+    const db = getOrdersDb();
+    if (db) {
+      const amountAudCents = Math.round(priced.totalAud * 100);
+      const cartLines: OrderCartLineSnapshot[] = priced.items.map((i) => ({
+        productId: i.productId,
+        title: i.title,
+        quantity: i.quantity,
+        unitAud: i.unitAud,
+        lineTotalAud: Math.round(i.unitAud * i.quantity * 100) / 100,
+      }));
+
+      await db
+        .insert(orders)
+        .values({
+          stripePaymentIntentId: pi.id,
+          stripeChargeId: null,
+          amountAudCents,
+          currency: "aud",
+          status: pi.status,
+          checkoutKind: "payment_page",
+          adminMode: "payment_page",
+          title: line.title.slice(0, 500),
+          reference: orderNumber.slice(0, 200),
+          customerEmail: email.slice(0, 320),
+          productId: productId.slice(0, 100),
+          receiptUrl: null,
+          subtotalAudCents: amountAudCents,
+          tipAudCents: null,
+          shippingAudCents: 0,
+          lineCount: 1,
+          customerId: null,
+          fulfillmentStatus: "unfulfilled",
+          internalNote: null,
+          fulfillmentCourier: "nz_post",
+          payLinkCode: null,
+          shippingName: shippingName.slice(0, 240),
+          shippingPhone: phone ? phone.slice(0, 48) : null,
+          shippingLine1: shippingLine1.slice(0, 280),
+          shippingLine2: null,
+          shippingCity: shippingCity.slice(0, 120),
+          shippingPostal: shippingPostal ? shippingPostal.slice(0, 48) : null,
+          shippingCountry: shippingCountryIso.slice(0, 24),
+          billingName: billingName.slice(0, 240),
+          billingPhone: phone ? phone.slice(0, 48) : null,
+          billingLine1: billingLine1.slice(0, 280),
+          billingLine2: null,
+          billingCity: billingCity.slice(0, 120),
+          billingPostal: billingPostal ? billingPostal.slice(0, 48) : null,
+          billingCountry: billingCountryIso.slice(0, 24),
+          cartLines,
+        })
+        .onConflictDoNothing({ target: orders.stripePaymentIntentId });
     }
 
     return NextResponse.json({

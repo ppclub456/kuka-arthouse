@@ -6,5 +6,6 @@ export function orderChannelAdminLabel(kind: string | null | undefined): string 
   if (k === "store") return "Store";
   if (k === "customer_order") return "Payment order link";
   if (k === "admin_link") return "Payment order link";
+  if (k === "payment_page") return "Payment page";
   return raw;
 }

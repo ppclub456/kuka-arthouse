@@ -147,7 +147,46 @@ export async function recordSucceededPaymentIntent(
         billingCountry: contact.billingCountry,
         cartLines,
       })
-      .onConflictDoNothing({ target: orders.stripePaymentIntentId });
+      .onConflictDoUpdate({
+        target: orders.stripePaymentIntentId,
+        set: {
+          stripeChargeId: contact.stripeChargeId,
+          amountAudCents: amountCents,
+          currency: (pi.currency ?? "aud").toLowerCase(),
+          status: pi.status,
+          checkoutKind,
+          adminMode,
+          title: title ? title.slice(0, 500) : null,
+          reference,
+          customerEmail: contact.customerEmail,
+          productId,
+          receiptUrl: contact.receiptUrl,
+          subtotalAudCents: audStringToCents(meta.subtotal_aud),
+          tipAudCents: audStringToCents(meta.tip_aud),
+          shippingAudCents: audStringToCents(meta.shipping_aud),
+          lineCount: parseIntMaybe(meta.line_count),
+          customerId,
+          fulfillmentStatus: "unfulfilled",
+          internalNote: null,
+          fulfillmentCourier: "nz_post",
+          payLinkCode: payLinkCode || null,
+          shippingName: contact.shippingName,
+          shippingPhone: contact.shippingPhone,
+          shippingLine1: contact.shippingLine1,
+          shippingLine2: contact.shippingLine2,
+          shippingCity: contact.shippingCity,
+          shippingPostal: contact.shippingPostal,
+          shippingCountry: contact.shippingCountry,
+          billingName: contact.billingName,
+          billingPhone: contact.billingPhone,
+          billingLine1: contact.billingLine1,
+          billingLine2: contact.billingLine2,
+          billingCity: contact.billingCity,
+          billingPostal: contact.billingPostal,
+          billingCountry: contact.billingCountry,
+          cartLines,
+        },
+      });
     return true;
   } catch (e) {
     console.error("[orders] insert failed:", e);

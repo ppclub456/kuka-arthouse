@@ -1,0 +1,607 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import type { StripeBillingPrefill } from "@/components/embedded-stripe-payment";
+import { EmbeddedStripePayment } from "@/components/embedded-stripe-payment";
+import { CHECKOUT_COUNTRY_LABELS } from "@/lib/checkout-countries";
+import { PRODUCTS } from "@/data/products";
+import { countryLabelToIso } from "@/lib/country-iso";
+import { formatMoaPrice } from "@/lib/format";
+
+const inputCls =
+  "mt-2 w-full border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2.5 text-sm text-[var(--foreground)] focus:border-cyan-400/60 focus:outline-none rounded-sm";
+
+type Props = {
+  publishableKey: string;
+};
+
+export function PaymentPageForm({ publishableKey }: Props) {
+  const [productId, setProductId] = useState(PRODUCTS[0]?.id ?? "");
+  const [orderNumber, setOrderNumber] = useState("");
+  const [amountInput, setAmountInput] = useState("");
+
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [shipLine1, setShipLine1] = useState("");
+  const [shipCity, setShipCity] = useState("");
+  const [shipPostal, setShipPostal] = useState("");
+  const [shipCountryLabel, setShipCountryLabel] = useState("Australia");
+
+  const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
+  const [billName, setBillName] = useState("");
+  const [billLine1, setBillLine1] = useState("");
+  const [billCity, setBillCity] = useState("");
+  const [billPostal, setBillPostal] = useState("");
+  const [billCountryLabel, setBillCountryLabel] = useState("Australia");
+
+  const [step, setStep] = useState<"details" | "payment">("details");
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [totalAud, setTotalAud] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const selected = PRODUCTS.find((p) => p.id === productId);
+
+  const amountAud = useMemo(() => {
+    const n = Number.parseFloat(amountInput.trim().replace(/,/g, ""));
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }, [amountInput]);
+
+  const previewTotal = amountAud;
+
+  function syncBillingFromShipping() {
+    setBillName(name);
+    setBillLine1(shipLine1);
+    setBillCity(shipCity);
+    setBillPostal(shipPostal);
+    setBillCountryLabel(shipCountryLabel);
+  }
+
+  function toggleBillingSame(checked: boolean) {
+    setBillingSameAsShipping(checked);
+    if (!checked) syncBillingFromShipping();
+  }
+
+  const stripeBillingCountry =
+    billingSameAsShipping ? shipCountryLabel : billCountryLabel;
+  const stripeBillingLine1 =
+    billingSameAsShipping ? shipLine1 : billLine1;
+  const stripeBillingCity = billingSameAsShipping ? shipCity : billCity;
+  const stripeBillingPostal =
+    billingSameAsShipping ? shipPostal : billPostal;
+  const stripeBillingName = billingSameAsShipping ? name : billName || name;
+
+  const billingPrefill: StripeBillingPrefill | undefined =
+    step === "payment" && email
+      ? {
+          email,
+          name: stripeBillingName,
+          phone: phone.trim() || undefined,
+          address: {
+            line1: stripeBillingLine1,
+            city: stripeBillingCity,
+            postal_code: stripeBillingPostal,
+            country: countryLabelToIso(stripeBillingCountry),
+          },
+        }
+      : undefined;
+
+  const amountLabel =
+    totalAud != null ? formatMoaPrice(totalAud) : previewTotal != null ? formatMoaPrice(previewTotal) : "—";
+
+  async function startPayment() {
+    setMsg("");
+    if (!publishableKey) {
+      setMsg("Payments are not configured (missing Stripe publishable key).");
+      return;
+    }
+    if (!productId) {
+      setMsg("Please select a product.");
+      return;
+    }
+    if (!orderNumber.trim()) {
+      setMsg("Please enter your order number.");
+      return;
+    }
+    if (amountAud == null || amountAud < 0.5) {
+      setMsg("Enter a payment amount of at least A$0.50.");
+      return;
+    }
+    if (
+      !email.trim().includes("@") ||
+      name.trim().length < 2 ||
+      shipLine1.trim().length < 4 ||
+      shipCity.trim().length < 2
+    ) {
+      setMsg("Please complete shipping: email, recipient name, street address, and city.");
+      return;
+    }
+    if (!billingSameAsShipping) {
+      if (
+        billName.trim().length < 2 ||
+        billLine1.trim().length < 4 ||
+        billCity.trim().length < 2
+      ) {
+        setMsg("Please complete billing: name, street address, and city.");
+        return;
+      }
+    }
+
+    setBusy(true);
+    try {
+      const res = await fetch("/api/stripe/create-payment-page-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId,
+          orderNumber: orderNumber.trim(),
+          amountAud,
+          shipping: {
+            email: email.trim(),
+            name: name.trim(),
+            phone: phone.trim(),
+            line1: shipLine1.trim(),
+            city: shipCity.trim(),
+            postal_code: shipPostal.trim(),
+            countryLabel: shipCountryLabel,
+          },
+          billing_same_as_shipping: billingSameAsShipping,
+          ...(billingSameAsShipping
+            ? {}
+            : {
+                billing_address: {
+                  name: billName.trim(),
+                  line1: billLine1.trim(),
+                  city: billCity.trim(),
+                  postal_code: billPostal.trim(),
+                  countryLabel: billCountryLabel,
+                },
+              }),
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        clientSecret?: string;
+        publishableKey?: string;
+        totalAud?: number;
+      };
+      if (!res.ok) {
+        setMsg(data.error ?? "Could not prepare payment.");
+        return;
+      }
+      if (!data.clientSecret) {
+        setMsg("Stripe did not return a client secret.");
+        return;
+      }
+      setClientSecret(data.clientSecret);
+      setTotalAud(
+        typeof data.totalAud === "number" && Number.isFinite(data.totalAud)
+          ? data.totalAud
+          : previewTotal,
+      );
+      setStep("payment");
+    } catch {
+      setMsg("Network error — please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    void startPayment();
+  }
+
+  if (!PRODUCTS.length) {
+    return (
+      <p className="text-sm text-[var(--muted-foreground)]">
+        No products are available for payment.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+      <div className="space-y-8">
+        {step === "details" ? (
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <section className="ai-panel rounded-sm p-6">
+              <h2 className="text-base font-semibold text-[var(--foreground)]">
+                Product &amp; amount
+              </h2>
+              <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                Select the artwork you are paying for, then enter the amount agreed with us (AUD).
+              </p>
+
+              <div className="mt-6">
+                <label
+                  htmlFor="pay-product"
+                  className="text-sm font-medium text-[var(--foreground)]"
+                >
+                  Product <span className="text-[var(--accent)]">*</span>
+                </label>
+                <select
+                  id="pay-product"
+                  required
+                  value={productId}
+                  onChange={(e) => setProductId(e.target.value)}
+                  className={inputCls}
+                >
+                  {PRODUCTS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.title} — list {formatMoaPrice(p.priceAud)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selected ? (
+                <div className="mt-4 flex gap-4 rounded-sm border border-[var(--border)] bg-[var(--surface-elevated)]/40 p-3">
+                  <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-[var(--background)]">
+                    <Image
+                      src={selected.imageSrc}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="80px"
+                    />
+                  </div>
+                  <div className="min-w-0 text-sm">
+                    <p className="font-semibold text-[var(--foreground)]">{selected.title}</p>
+                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                      Catalogue price {formatMoaPrice(selected.priceAud)} — your payment amount
+                      may differ.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-6">
+                <label
+                  htmlFor="pay-order-no"
+                  className="text-sm font-medium text-[var(--foreground)]"
+                >
+                  Order number <span className="text-[var(--accent)]">*</span>
+                </label>
+                <input
+                  id="pay-order-no"
+                  required
+                  value={orderNumber}
+                  onChange={(e) => setOrderNumber(e.target.value)}
+                  placeholder="e.g. Invoice #4821"
+                  autoComplete="off"
+                  className={inputCls}
+                />
+                <p className="mt-1.5 text-xs text-[var(--muted-foreground)]">
+                  The reference we gave you (invoice or order ID) so we can match your payment.
+                </p>
+              </div>
+
+              <div className="mt-6">
+                <label
+                  htmlFor="pay-amount"
+                  className="text-sm font-medium text-[var(--foreground)]"
+                >
+                  Payment amount (AUD) <span className="text-[var(--accent)]">*</span>
+                </label>
+                <input
+                  id="pay-amount"
+                  inputMode="decimal"
+                  required
+                  min={0.5}
+                  step="0.01"
+                  placeholder="0.00"
+                  value={amountInput}
+                  onChange={(e) => setAmountInput(e.target.value)}
+                  className={inputCls}
+                />
+                <p className="mt-1.5 text-xs text-[var(--muted-foreground)]">
+                  Minimum A$0.50. No shipping fee is added on this page — enter the total we quoted you.
+                </p>
+              </div>
+            </section>
+
+            <section className="ai-panel rounded-sm p-6">
+              <h2 className="text-base font-semibold text-[var(--foreground)]">
+                Shipping address
+              </h2>
+              <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                Where we should send your order and payment confirmation.
+              </p>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label htmlFor="pay-email" className="text-sm font-medium text-[var(--foreground)]">
+                    Email <span className="text-[var(--accent)]">*</span>
+                  </label>
+                  <input
+                    id="pay-email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="pay-name" className="text-sm font-medium text-[var(--foreground)]">
+                    Full name <span className="text-[var(--accent)]">*</span>
+                  </label>
+                  <input
+                    id="pay-name"
+                    autoComplete="name"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="pay-phone" className="text-sm font-medium text-[var(--foreground)]">
+                    Phone
+                  </label>
+                  <input
+                    id="pay-phone"
+                    type="tel"
+                    autoComplete="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="pay-ship-line1" className="text-sm font-medium text-[var(--foreground)]">
+                    Street address <span className="text-[var(--accent)]">*</span>
+                  </label>
+                  <input
+                    id="pay-ship-line1"
+                    autoComplete="shipping address-line1"
+                    required
+                    value={shipLine1}
+                    onChange={(e) => setShipLine1(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pay-ship-city" className="text-sm font-medium text-[var(--foreground)]">
+                    City <span className="text-[var(--accent)]">*</span>
+                  </label>
+                  <input
+                    id="pay-ship-city"
+                    autoComplete="shipping address-level2"
+                    required
+                    value={shipCity}
+                    onChange={(e) => setShipCity(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pay-ship-postal" className="text-sm font-medium text-[var(--foreground)]">
+                    Postcode / ZIP
+                  </label>
+                  <input
+                    id="pay-ship-postal"
+                    autoComplete="shipping postal-code"
+                    value={shipPostal}
+                    onChange={(e) => setShipPostal(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="pay-ship-country" className="text-sm font-medium text-[var(--foreground)]">
+                    Country / region <span className="text-[var(--accent)]">*</span>
+                  </label>
+                  <select
+                    id="pay-ship-country"
+                    autoComplete="shipping country"
+                    required
+                    value={shipCountryLabel}
+                    onChange={(e) => setShipCountryLabel(e.target.value)}
+                    className={inputCls}
+                  >
+                    {CHECKOUT_COUNTRY_LABELS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section className="ai-panel rounded-sm p-6">
+              <h2 className="text-base font-semibold text-[var(--foreground)]">
+                Billing address
+              </h2>
+
+              <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-sm border border-[var(--border-dim)] bg-[var(--surface-elevated)]/35 px-4 py-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={billingSameAsShipping}
+                  onChange={(e) => toggleBillingSame(e.target.checked)}
+                  className="mt-1 shrink-0 rounded border-cyan-500/40 bg-[var(--input-bg)]"
+                />
+                <span>
+                  <span className="font-medium text-[var(--foreground)]">
+                    Billing address is the same as shipping address
+                  </span>
+                  <span className="mt-0.5 block text-xs text-[var(--muted-foreground)]">
+                    Uncheck if your card billing address is different from where we ship.
+                  </span>
+                </span>
+              </label>
+
+              {!billingSameAsShipping ? (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <label htmlFor="pay-bill-name" className="text-sm font-medium text-[var(--foreground)]">
+                      Full name (on card) <span className="text-[var(--accent)]">*</span>
+                    </label>
+                    <input
+                      id="pay-bill-name"
+                      autoComplete="billing name"
+                      required={!billingSameAsShipping}
+                      value={billName}
+                      onChange={(e) => setBillName(e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label htmlFor="pay-bill-line1" className="text-sm font-medium text-[var(--foreground)]">
+                      Billing street <span className="text-[var(--accent)]">*</span>
+                    </label>
+                    <input
+                      id="pay-bill-line1"
+                      autoComplete="billing address-line1"
+                      required={!billingSameAsShipping}
+                      value={billLine1}
+                      onChange={(e) => setBillLine1(e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="pay-bill-city" className="text-sm font-medium text-[var(--foreground)]">
+                      City <span className="text-[var(--accent)]">*</span>
+                    </label>
+                    <input
+                      id="pay-bill-city"
+                      autoComplete="billing address-level2"
+                      required={!billingSameAsShipping}
+                      value={billCity}
+                      onChange={(e) => setBillCity(e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="pay-bill-postal" className="text-sm font-medium text-[var(--foreground)]">
+                      Postcode / ZIP
+                    </label>
+                    <input
+                      id="pay-bill-postal"
+                      autoComplete="billing postal-code"
+                      value={billPostal}
+                      onChange={(e) => setBillPostal(e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label htmlFor="pay-bill-country" className="text-sm font-medium text-[var(--foreground)]">
+                      Country / region
+                    </label>
+                    <select
+                      id="pay-bill-country"
+                      autoComplete="billing country"
+                      value={billCountryLabel}
+                      onChange={(e) => setBillCountryLabel(e.target.value)}
+                      className={inputCls}
+                    >
+                      {CHECKOUT_COUNTRY_LABELS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ) : null}
+            </section>
+
+            {msg ? (
+              <p className="text-sm text-red-400/95" role="alert">
+                {msg}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="moa-cta w-full py-4 text-sm font-semibold uppercase tracking-[0.2em] disabled:opacity-60"
+            >
+              {busy ? "Preparing secure payment…" : "Continue to card payment"}
+            </button>
+            <p className="text-center text-xs text-[var(--muted-foreground)]">
+              Card details are encrypted by Stripe — we never see your full card number.
+            </p>
+          </form>
+        ) : clientSecret ? (
+          <div className="ai-panel rounded-sm p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-500/70">
+              Card payment
+            </p>
+            <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+              Pay {amountLabel} AUD for {selected?.title ?? "your order"}.
+            </p>
+            <div className="mt-6">
+              <EmbeddedStripePayment
+                key={clientSecret}
+                publishableKey={publishableKey}
+                clientSecret={clientSecret}
+                amountLabel={amountLabel}
+                defaultBillingDetails={billingPrefill}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setStep("details");
+                setClientSecret(null);
+                setMsg("");
+              }}
+              className="mt-6 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 underline-offset-4 hover:text-cyan-400 hover:underline"
+            >
+              ← Edit details
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      <aside className="lg:sticky lg:top-24">
+        <div className="ai-panel rounded-sm p-6">
+          <h2 className="text-base font-semibold text-cyan-400/90">Payment summary</h2>
+          {selected ? (
+            <div className="mt-4 flex gap-3 border-b border-[var(--border)] pb-4">
+              <div className="relative h-16 w-14 shrink-0 overflow-hidden">
+                <Image
+                  src={selected.imageSrc}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="56px"
+                />
+              </div>
+              <p className="text-sm font-medium leading-snug text-[var(--foreground)]">
+                {selected.title}
+              </p>
+            </div>
+          ) : null}
+          {orderNumber.trim() ? (
+            <p className="mt-4 text-sm text-[var(--muted-foreground)]">
+              Order no.{" "}
+              <span className="font-mono font-medium text-[var(--foreground)]">
+                {orderNumber.trim()}
+              </span>
+            </p>
+          ) : null}
+          <dl className="mt-4 space-y-2 text-sm">
+            <div className="flex justify-between border-t border-[var(--border)] pt-3 text-base font-semibold">
+              <dt className="text-[var(--foreground)]">Total due</dt>
+              <dd className="bg-gradient-to-r from-cyan-300 to-violet-300 bg-clip-text text-transparent">
+                {previewTotal != null ? formatMoaPrice(previewTotal) : "—"}
+              </dd>
+            </div>
+          </dl>
+          <Link
+            href="/"
+            className="mt-6 inline-block text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--muted-foreground)] hover:text-cyan-400"
+          >
+            ← Back to store
+          </Link>
+        </div>
+      </aside>
+    </div>
+  );
+}

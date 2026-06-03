@@ -433,6 +433,29 @@ export function PaymentPageForm({ publishableKey }: Props) {
                 Where we should send your order and payment confirmation.
               </p>
 
+              <div className="mt-4 rounded-sm border border-sky-200 bg-sky-50/80 px-4 py-3 text-sm leading-relaxed text-zinc-700">
+                <p className="font-medium text-zinc-900">Where we ship from</p>
+                <ul className="mt-2 list-inside list-disc space-y-1 text-zinc-600">
+                  <li>
+                    <strong className="font-medium text-zinc-800">New Zealand</strong> delivery
+                    address — we ship from New Zealand.
+                  </li>
+                  <li>
+                    <strong className="font-medium text-zinc-800">Australia</strong> delivery
+                    address — we ship from Australia.
+                  </li>
+                  <li>
+                    <strong className="font-medium text-zinc-800">United Kingdom</strong> delivery
+                    address — we ship from the UK.
+                  </li>
+                </ul>
+                <p className="mt-3 text-zinc-600">
+                  Card payment on this page is always in{" "}
+                  <strong className="font-medium text-zinc-800">Australian dollars (AUD)</strong> —
+                  regardless of where your order is delivered.
+                </p>
+              </div>
+
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label htmlFor="pay-email" className="text-sm font-medium text-[var(--foreground)]">

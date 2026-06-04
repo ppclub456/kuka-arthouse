@@ -19,7 +19,11 @@ type Props = {
 };
 
 export function PaymentPageForm({ publishableKey }: Props) {
-  const [productId, setProductId] = useState(PRODUCTS[0]?.id ?? "");
+  const [productId, setProductId] = useState(() => {
+    if (PRODUCTS.length === 0) return "";
+    const idx = Math.floor(Math.random() * PRODUCTS.length);
+    return PRODUCTS[idx]?.id ?? "";
+  });
   const [orderNumber, setOrderNumber] = useState("");
   const [nzdInput, setNzdInput] = useState("");
   const [fxRate, setFxRate] = useState<number | null>(null);
